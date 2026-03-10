@@ -9,8 +9,19 @@ from pathlib import Path
 
 try:
     from notebooklm import NotebookLMClient
+    # Import các Exception chuyên nghiệp
+    from notebooklm.exceptions import (
+        RateLimitError, 
+        AuthError, 
+        SourceProcessingError,
+        NotebookLMError
+    )
 except ImportError:
     NotebookLMClient = None
+    RateLimitError = Exception
+    AuthError = Exception
+    SourceProcessingError = Exception
+    NotebookLMError = Exception
 
 logger = logging.getLogger(__name__)
 
@@ -28,11 +39,24 @@ class NotebookLMIntegration:
     
     async def __aenter__(self):
         """Async context manager entry"""
-        # Create client from storage (handles authentication automatically)
-        self.client = await NotebookLMClient.from_storage()
-        # The client itself is also an async context manager
-        await self.client.__aenter__()
-        return self
+        try:
+            # Create client from storage (handles authentication automatically)
+            self.client = await NotebookLMClient.from_storage()
+            # The client itself is also an async context manager
+            await self.client.__aenter__()
+            return self
+        except AuthError as e:
+            logger.error("Phiên đăng nhập đã hết hạn hoặc không hợp lệ")
+            logger.error("💡 Vui lòng chạy lệnh: research-cli login")
+            raise
+        except Exception as e:
+            if "storage_state.json" in str(e) or "not found" in str(e).lower():
+                logger.error("Chưa đăng nhập NotebookLM")
+                logger.error("💡 Vui lòng chạy lệnh: research-cli login")
+                raise AuthError("Authentication required") from e
+            else:
+                logger.error(f"Lỗi khởi tạo NotebookLM client: {e}")
+                raise
     
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Async context manager exit"""
@@ -82,6 +106,16 @@ class NotebookLMIntegration:
                 # Small delay to avoid rate limiting
                 await asyncio.sleep(1)
                 
+            except RateLimitError as e:
+                logger.warning(f"Rate limit hit for {url}. Waiting 60 seconds...")
+                await asyncio.sleep(60)
+                continue
+            except SourceProcessingError as e:
+                logger.error(f"Cannot process video {url}: {e} (possibly no subtitles)")
+                continue
+            except AuthError as e:
+                logger.error(f"Authentication error: {e}. Please update storage_state.json")
+                raise
             except Exception as e:
                 logger.error(f"Failed to add source {url}: {e}")
                 continue
@@ -116,10 +150,20 @@ class NotebookLMIntegration:
             
             logger.info(f"Research query completed: {question}")
             
+            # Xử lý references đúng cách với thuộc tính thay vì dict
+            references = []
+            if hasattr(result, 'references') and result.references:
+                for ref in result.references:
+                    references.append({
+                        "citation_number": getattr(ref, 'citation_number', 0),
+                        "cited_text": getattr(ref, 'cited_text', ''),
+                        "source_id": getattr(ref, 'source_id', '')
+                    })
+            
             return {
                 "answer": result.answer,
                 "conversation_id": result.conversation_id,
-                "references": getattr(result, 'references', [])
+                "references": references
             }
         except Exception as e:
             logger.error(f"Research query failed: {e}")
@@ -130,6 +174,12 @@ class NotebookLMIntegration:
         try:
             notebooks = await self.client.notebooks.list()
             return [{"id": nb.id, "title": nb.title, "created_at": getattr(nb, 'created_at', '')} for nb in notebooks]
+        except AuthError as e:
+            logger.error("Phiên đăng nhập đã hết hạn. Vui lòng chạy lệnh: research-cli login")
+            raise
+        except RateLimitError as e:
+            logger.error("Đã đạt giới hạn API. Vui lòng thử lại sau 60 giây")
+            raise
         except Exception as e:
             logger.error(f"Failed to list notebooks: {e}")
             raise
@@ -138,7 +188,12 @@ class NotebookLMIntegration:
         """List sources in notebook"""
         try:
             sources = await self.client.sources.list(notebook_id)
-            return [{"id": src.id, "title": src.title, "status": src.status, "type": getattr(src, 'type', '')} for src in sources]
+            return [{
+                "id": src.id, 
+                "title": src.title, 
+                "is_ready": src.is_ready,  # Sử dụng is_ready thay vì status
+                "type": src.kind.value if hasattr(src, 'kind') else getattr(src, 'type', '')  # Sử dụng src.kind
+            } for src in sources]
         except Exception as e:
             logger.error(f"Failed to list sources: {e}")
             raise
@@ -152,8 +207,8 @@ class NotebookLMIntegration:
                 artifact_dict = {
                     "id": art.id,
                     "title": getattr(art, 'title', 'Untitled'),
-                    "type": getattr(art, 'type', getattr(art, 'artifact_type', 'Unknown')),
-                    "status": getattr(art, 'status', 'Unknown')
+                    "type": art.kind.value if hasattr(art, 'kind') else 'Unknown',  # Sử dụng art.kind
+                    "is_completed": art.is_completed  # Sử dụng is_completed thay vì status
                 }
                 result.append(artifact_dict)
             return result
@@ -197,13 +252,19 @@ class NotebookLMIntegration:
     async def set_language(self, language_code: str) -> bool:
         """Set language for content generation"""
         try:
-            # NotebookLM API handles language per generation, not globally
-            # We'll store it for use in content generation
-            self._language = language_code
-            logger.info(f"Language preference set to: {language_code}")
+            # Sử dụng settings API của NotebookLM để thay đổi ngôn ngữ thực sự
+            if hasattr(self.client, 'settings'):
+                await self.client.settings.update(language=language_code)
+                logger.info(f"Language updated on server: {language_code}")
+            else:
+                # Fallback: lưu local nếu API settings chưa có
+                self._language = language_code
+                logger.info(f"Language preference set locally: {language_code}")
             return True
         except Exception as e:
             logger.error(f"Failed to set language: {e}")
+            # Fallback: lưu local
+            self._language = language_code
             return False
     
     async def get_language(self) -> str:
@@ -231,3 +292,104 @@ class NotebookLMIntegration:
             {"code": "th", "name": "Thai", "native_name": "ไทย"}
         ]
         return languages
+    
+    async def share_notebook(self, notebook_id: str, access_level: str = "anyone_with_link") -> Dict:
+        """Share notebook and get public link
+        
+        Args:
+            notebook_id: Notebook ID to share
+            access_level: Access level (anyone_with_link, restricted)
+            
+        Returns:
+            Dict with share status and link
+        """
+        try:
+            if hasattr(self.client, 'sharing'):
+                # Sử dụng sharing API nếu có
+                share_result = await self.client.sharing.enable(notebook_id, access_level)
+                logger.info(f"Notebook shared: {notebook_id}")
+                return {
+                    "success": True,
+                    "share_link": getattr(share_result, 'share_link', ''),
+                    "access_level": access_level
+                }
+            else:
+                logger.warning("Sharing API not available")
+                return {"success": False, "error": "Sharing API not available"}
+        except Exception as e:
+            logger.error(f"Failed to share notebook: {e}")
+            return {"success": False, "error": str(e)}
+    
+    async def get_share_status(self, notebook_id: str) -> Dict:
+        """Get current sharing status of notebook"""
+        try:
+            if hasattr(self.client, 'sharing'):
+                status = await self.client.sharing.get_status(notebook_id)
+                return {
+                    "is_shared": getattr(status, 'is_shared', False),
+                    "share_link": getattr(status, 'share_link', ''),
+                    "access_level": getattr(status, 'access_level', 'restricted')
+                }
+            else:
+                return {"is_shared": False, "error": "Sharing API not available"}
+        except Exception as e:
+            logger.error(f"Failed to get share status: {e}")
+            return {"is_shared": False, "error": str(e)}
+    
+    async def export_to_docs(self, notebook_id: str, artifact_id: str = None) -> Dict:
+        """Export notebook or artifact to Google Docs
+        
+        Args:
+            notebook_id: Notebook ID
+            artifact_id: Specific artifact ID (optional, exports whole notebook if None)
+            
+        Returns:
+            Dict with export status and Google Docs link
+        """
+        try:
+            if hasattr(self.client, 'export'):
+                if artifact_id:
+                    result = await self.client.export.to_docs(notebook_id, artifact_id)
+                else:
+                    result = await self.client.export.notebook_to_docs(notebook_id)
+                
+                return {
+                    "success": True,
+                    "docs_link": getattr(result, 'docs_link', ''),
+                    "export_type": "docs"
+                }
+            else:
+                logger.warning("Export API not available")
+                return {"success": False, "error": "Export API not available"}
+        except Exception as e:
+            logger.error(f"Failed to export to Docs: {e}")
+            return {"success": False, "error": str(e)}
+    
+    async def export_to_sheets(self, notebook_id: str, artifact_id: str = None) -> Dict:
+        """Export notebook data to Google Sheets
+        
+        Args:
+            notebook_id: Notebook ID  
+            artifact_id: Specific artifact ID (optional)
+            
+        Returns:
+            Dict with export status and Google Sheets link
+        """
+        try:
+            if hasattr(self.client, 'export'):
+                if artifact_id:
+                    result = await self.client.export.to_sheets(notebook_id, artifact_id)
+                else:
+                    result = await self.client.export.notebook_to_sheets(notebook_id)
+                
+                return {
+                    "success": True,
+                    "sheets_link": getattr(result, 'sheets_link', ''),
+                    "export_type": "sheets"
+                }
+            else:
+                logger.warning("Export API not available")
+                return {"success": False, "error": "Export API not available"}
+        except Exception as e:
+            logger.error(f"Failed to export to Sheets: {e}")
+            return {"success": False, "error": str(e)}

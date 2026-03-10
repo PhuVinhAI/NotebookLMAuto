@@ -96,7 +96,10 @@ def ask(ctx, notebook_id: str, question: str, sources: tuple, output_json: bool)
                     if result.get('references'):
                         click.echo(f"\n📚 Tham khảo ({len(result['references'])} nguồn):")
                         for i, ref in enumerate(result['references'][:3], 1):
-                            click.echo(f"  [{i}] {ref.get('cited_text', 'N/A')[:100]}...")
+                            # Sử dụng thuộc tính thay vì dict access
+                            citation_num = ref.get('citation_number', i)
+                            cited_text = ref.get('cited_text', 'N/A')
+                            click.echo(f"  [{citation_num}] {cited_text[:100]}...")
                     
         except Exception as e:
             print_error(f"Không thể trả lời câu hỏi: {e}")
@@ -157,7 +160,7 @@ def sources(ctx, notebook_id: str, output_json: bool):
                     else:
                         click.echo(f"📄 Có {len(sources)} nguồn:")
                         for src in sources:
-                            status_icon = "✅" if src['status'] == 'ready' else "⏳"
+                            status_icon = "✅" if src['is_ready'] else "⏳"  # Sử dụng is_ready
                             type_info = f" ({src.get('type', 'unknown')})" if src.get('type') else ""
                             click.echo(f"  {status_icon} {src['title']}{type_info} (ID: {src['id'][:8]}...)")
                     
@@ -190,7 +193,7 @@ def artifacts(ctx, notebook_id: str, output_json: bool):
                     else:
                         click.echo(f"🎨 Có {len(artifacts)} artifact:")
                         for art in artifacts:
-                            status_icon = "✅" if art['status'] == 'completed' else "⏳"
+                            status_icon = "✅" if art['is_completed'] else "⏳"  # Sử dụng is_completed
                             click.echo(f"  {status_icon} {art['type']}: {art['title']} (ID: {art['id'][:8]}...)")
                     
         except Exception as e:
@@ -315,3 +318,135 @@ def set_language(ctx, language_code: str):
             print_error(f"Lỗi đặt ngôn ngữ: {e}")
     
     asyncio.run(_set_language())
+
+
+@notebook_group.command()
+@click.argument('notebook_id')
+@click.option('--public', is_flag=True, help='Chia sẻ công khai với bất kỳ ai có link')
+@click.option('--json', 'output_json', is_flag=True, help='Xuất kết quả dạng JSON')
+@click.pass_context
+def share(ctx, notebook_id: str, public: bool, output_json: bool):
+    """Chia sẻ notebook và lấy link công khai"""
+    async def _share():
+        from ..integrations import NotebookLMIntegration
+        from ..utils.output import print_success, print_error
+        
+        try:
+            async with NotebookLMIntegration() as nlm:
+                access_level = "anyone_with_link" if public else "restricted"
+                result = await nlm.share_notebook(notebook_id, access_level)
+                
+                if output_json:
+                    import json
+                    click.echo(json.dumps(result, indent=2, ensure_ascii=False))
+                else:
+                    if result['success']:
+                        print_success("Notebook đã được chia sẻ!")
+                        if result.get('share_link'):
+                            click.echo(f"🔗 Link chia sẻ: {result['share_link']}")
+                        click.echo(f"🔒 Quyền truy cập: {result['access_level']}")
+                    else:
+                        print_error(f"Không thể chia sẻ: {result.get('error', 'Unknown error')}")
+                    
+        except Exception as e:
+            print_error(f"Lỗi chia sẻ notebook: {e}")
+    
+    asyncio.run(_share())
+
+
+@notebook_group.command()
+@click.argument('notebook_id')
+@click.option('--json', 'output_json', is_flag=True, help='Xuất kết quả dạng JSON')
+@click.pass_context
+def share_status(ctx, notebook_id: str, output_json: bool):
+    """Kiểm tra trạng thái chia sẻ của notebook"""
+    async def _share_status():
+        from ..integrations import NotebookLMIntegration
+        from ..utils.output import print_error
+        
+        try:
+            async with NotebookLMIntegration() as nlm:
+                status = await nlm.get_share_status(notebook_id)
+                
+                if output_json:
+                    import json
+                    click.echo(json.dumps(status, indent=2, ensure_ascii=False))
+                else:
+                    if status.get('is_shared'):
+                        click.echo("✅ Notebook đang được chia sẻ")
+                        if status.get('share_link'):
+                            click.echo(f"🔗 Link: {status['share_link']}")
+                        click.echo(f"🔒 Quyền: {status.get('access_level', 'Unknown')}")
+                    else:
+                        click.echo("🔒 Notebook chưa được chia sẻ")
+                        if status.get('error'):
+                            click.echo(f"⚠️  {status['error']}")
+                    
+        except Exception as e:
+            print_error(f"Lỗi kiểm tra trạng thái: {e}")
+    
+    asyncio.run(_share_status())
+
+
+@notebook_group.command()
+@click.argument('notebook_id')
+@click.option('--artifact-id', help='ID artifact cụ thể để export (optional)')
+@click.option('--json', 'output_json', is_flag=True, help='Xuất kết quả dạng JSON')
+@click.pass_context
+def export_docs(ctx, notebook_id: str, artifact_id: str, output_json: bool):
+    """Export notebook hoặc artifact lên Google Docs"""
+    async def _export_docs():
+        from ..integrations import NotebookLMIntegration
+        from ..utils.output import print_success, print_error
+        
+        try:
+            async with NotebookLMIntegration() as nlm:
+                result = await nlm.export_to_docs(notebook_id, artifact_id)
+                
+                if output_json:
+                    import json
+                    click.echo(json.dumps(result, indent=2, ensure_ascii=False))
+                else:
+                    if result['success']:
+                        print_success("✅ Export thành công lên Google Docs!")
+                        if result.get('docs_link'):
+                            click.echo(f"📄 Link Google Docs: {result['docs_link']}")
+                    else:
+                        print_error(f"❌ Export thất bại: {result.get('error', 'Unknown error')}")
+                    
+        except Exception as e:
+            print_error(f"Lỗi export: {e}")
+    
+    asyncio.run(_export_docs())
+
+
+@notebook_group.command()
+@click.argument('notebook_id')
+@click.option('--artifact-id', help='ID artifact cụ thể để export (optional)')
+@click.option('--json', 'output_json', is_flag=True, help='Xuất kết quả dạng JSON')
+@click.pass_context
+def export_sheets(ctx, notebook_id: str, artifact_id: str, output_json: bool):
+    """Export dữ liệu notebook lên Google Sheets"""
+    async def _export_sheets():
+        from ..integrations import NotebookLMIntegration
+        from ..utils.output import print_success, print_error
+        
+        try:
+            async with NotebookLMIntegration() as nlm:
+                result = await nlm.export_to_sheets(notebook_id, artifact_id)
+                
+                if output_json:
+                    import json
+                    click.echo(json.dumps(result, indent=2, ensure_ascii=False))
+                else:
+                    if result['success']:
+                        print_success("✅ Export thành công lên Google Sheets!")
+                        if result.get('sheets_link'):
+                            click.echo(f"📊 Link Google Sheets: {result['sheets_link']}")
+                    else:
+                        print_error(f"❌ Export thất bại: {result.get('error', 'Unknown error')}")
+                    
+        except Exception as e:
+            print_error(f"Lỗi export: {e}")
+    
+    asyncio.run(_export_sheets())

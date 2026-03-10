@@ -11,6 +11,7 @@ from .commands.notebook import notebook_group
 from .commands.generate import generate_group
 from .commands.export import export_command
 from .commands.pipeline import pipeline
+from .commands.auth import login, logout, status
 from .__init__ import __version__
 
 
@@ -32,10 +33,16 @@ def cli(ctx, verbose: bool):
     
     Công cụ nghiên cứu chuyên nghiệp kết hợp YouTube và NotebookLM
     
-    Examples:
+    🚀 Bắt đầu nhanh:
+      research-cli login                    # Đăng nhập Google/NotebookLM
+      research-cli status                   # Kiểm tra trạng thái đăng nhập
+      research-cli pipeline "AI tools"      # Chạy pipeline nghiên cứu tự động
+    
+    📚 Các lệnh chính:
       research-cli search "AI tools" --min-views 100000
       research-cli notebook create "My Research"
-      research-cli workflow research "AI trends" --generate podcast
+      research-cli notebook share <id> --public
+      research-cli generate podcast <notebook-id>
     """
     ctx.ensure_object(dict)
     ctx.obj['verbose'] = verbose
@@ -43,6 +50,9 @@ def cli(ctx, verbose: bool):
 
 
 # Register all command groups
+cli.add_command(login, name='login')
+cli.add_command(logout, name='logout') 
+cli.add_command(status, name='status')
 cli.add_command(search_command, name='search')
 cli.add_command(info_command, name='info')
 cli.add_command(notebook_group, name='notebook')

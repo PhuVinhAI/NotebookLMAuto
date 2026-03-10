@@ -6,7 +6,42 @@ import asyncio
 import logging
 from typing import Optional, Dict, List
 
+try:
+    # Import các Enums để mapping từ string
+    from notebooklm.rpc.types import AudioFormat, QuizDifficulty, FlashcardDifficulty
+except ImportError:
+    AudioFormat = None
+    QuizDifficulty = None
+    FlashcardDifficulty = None
+
 logger = logging.getLogger(__name__)
+
+
+class ContentGenerators:
+    """Content generation utilities for NotebookLM"""
+    
+    def __init__(self, client):
+        """Initialize with NotebookLM client"""
+        self.client = client
+        
+        # Mapping từ string sang Enum để tránh lỗi TypeError
+        self.audio_format_map = {
+            "deep-dive": AudioFormat.DEEP_DIVE if AudioFormat else "deep-dive",
+            "overview": AudioFormat.OVERVIEW if AudioFormat else "overview", 
+            "interview": AudioFormat.INTERVIEW if AudioFormat else "interview"
+        }
+        
+        self.quiz_difficulty_map = {
+            "easy": QuizDifficulty.EASY if QuizDifficulty else "easy",
+            "medium": QuizDifficulty.MEDIUM if QuizDifficulty else "medium",
+            "hard": QuizDifficulty.HARD if QuizDifficulty else "hard"
+        }
+        
+        self.flashcard_difficulty_map = {
+            "easy": FlashcardDifficulty.EASY if FlashcardDifficulty else "easy", 
+            "medium": FlashcardDifficulty.MEDIUM if FlashcardDifficulty else "medium",
+            "hard": FlashcardDifficulty.HARD if FlashcardDifficulty else "hard"
+        }
 
 
 class ContentGenerators:
@@ -40,7 +75,8 @@ class ContentGenerators:
             if instructions:
                 kwargs['instructions'] = instructions
             if format_type != "deep-dive":
-                kwargs['format'] = format_type
+                # Map string to Enum
+                kwargs['format'] = self.audio_format_map.get(format_type, format_type)
             if length != "default":
                 kwargs['length'] = length
             if language:
@@ -86,7 +122,8 @@ class ContentGenerators:
             # Generate quiz
             kwargs = {}
             if difficulty != "medium":
-                kwargs['difficulty'] = difficulty
+                # Map string to Enum
+                kwargs['difficulty'] = self.quiz_difficulty_map.get(difficulty, difficulty)
             if quantity != "standard":
                 kwargs['quantity'] = quantity
             if language:
@@ -118,7 +155,8 @@ class ContentGenerators:
         try:
             kwargs = {}
             if difficulty != "medium":
-                kwargs['difficulty'] = difficulty
+                # Map string to Enum
+                kwargs['difficulty'] = self.flashcard_difficulty_map.get(difficulty, difficulty)
             if quantity != "standard":
                 kwargs['quantity'] = quantity
             if language:
