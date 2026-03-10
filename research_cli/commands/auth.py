@@ -24,24 +24,46 @@ def login():
         
         try:
             async with async_playwright() as p:
-                # Khởi chạy trình duyệt có giao diện (headless=False)
-                browser = await p.chromium.launch(headless=False)
-                context = await browser.new_context()
+                # CÁC THAM SỐ ANTI-BOT ĐỂ QUA MẶT GOOGLE
+                browser = await p.chromium.launch(
+                    headless=False,
+                    args=[
+                        "--disable-blink-features=AutomationControlled",  # Tắt cờ báo hiệu bot
+                        "--start-maximized"
+                    ],
+                    ignore_default_args=["--enable-automation"]  # Ẩn dòng chữ "Chrome is being controlled..."
+                )
+                
+                # Cấu hình User-Agent giống hệt người dùng thật
+                context = await browser.new_context(
+                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+                    viewport={"width": 1280, "height": 720}
+                )
+                
+                # Chặn thuộc tính webdriver bằng script khởi tạo
+                await context.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+                
                 page = await context.new_page()
                 
                 # Đi tới trang NotebookLM
                 await page.goto("https://notebooklm.google.com/")
                 
-                # Chờ người dùng đăng nhập và trang tải xong
-                click.echo("\n👉 Khi bạn đã thấy màn hình chính của NotebookLM, hãy quay lại đây.")
-                click.pause(info="Nhấn phím BẤT KỲ để lưu phiên đăng nhập và đóng trình duyệt...")
+                # Chờ người dùng đăng nhập
+                click.echo("\n👉 Khi bạn đã đăng nhập thành công và thấy màn hình chính của NotebookLM...")
+                click.pause(info="Nhấn phím ENTER tại đây để lưu phiên và đóng trình duyệt...")
+                
+                # Kiểm tra xem có lấy được cookie cần thiết chưa (tuỳ chọn)
+                cookies = await context.cookies()
+                has_auth = any(c['name'] == 'SID' or c['name'] == 'HSID' for c in cookies)
+                if not has_auth:
+                    print_info("⚠️ Có vẻ bạn chưa đăng nhập thành công (hoặc chưa lưu đủ cookie). Vẫn tiếp tục lưu file...")
                 
                 # Lưu cookie và state lại cho thư viện notebooklm-py sử dụng
                 await context.storage_state(path=str(storage_path))
                 await browser.close()
                 
-                print_success(f"✅ Đăng nhập thành công! Phiên đã được lưu tại: {storage_path}")
-                print_success("Bây giờ bạn có thể sử dụng các lệnh: research-cli pipeline ...")
+                print_success(f"✅ Đã lưu phiên đăng nhập tại: {storage_path}")
+                print_success("Bây giờ bạn có thể sử dụng các lệnh của CLI.")
                 
         except Exception as e:
             print_error(f"Lỗi trong quá trình đăng nhập: {e}")
