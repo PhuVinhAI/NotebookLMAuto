@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-Công cụ tìm kiếm YouTube tùy chỉnh sử dụng yt-dlp
-Tính năng: Tìm kiếm, lấy thông tin video và tải phụ đề
+YouTube Search Tool CLI - Tìm kiếm và phân tích video YouTube
+Sử dụng yt-dlp để tìm kiếm, lấy thông tin và tải phụ đề
 """
 
 import yt_dlp
 import json
 import os
+import click
 from typing import List, Dict, Optional
 
 
@@ -54,7 +55,7 @@ class YouTubeSearchTool:
                 return videos
                 
             except Exception as e:
-                print(f"Lỗi khi tìm kiếm: {e}")
+                click.echo(f"Lỗi khi tìm kiếm: {e}", err=True)
                 return []
     
     def get_video_info(self, video_url: str) -> Optional[Dict]:
@@ -86,7 +87,7 @@ class YouTubeSearchTool:
                 }
                 
             except Exception as e:
-                print(f"Lỗi khi lấy thông tin video: {e}")
+                click.echo(f"Lỗi khi lấy thông tin video: {e}", err=True)
                 return None
     
     def download_subtitles(self, video_url: str, output_dir: str = "subtitles", 
@@ -119,7 +120,7 @@ class YouTubeSearchTool:
                 ydl.download([video_url])
                 return True
             except Exception as e:
-                print(f"Lỗi khi tải phụ đề: {e}")
+                click.echo(f"Lỗi khi tải phụ đề: {e}", err=True)
                 return False
     
     def format_duration(self, seconds: int) -> str:
@@ -146,82 +147,106 @@ class YouTubeSearchTool:
             return str(count)
 
 
-def main():
-    """Hàm chính để demo công cụ"""
+# CLI Commands using Click
+@click.group()
+@click.version_option(version="1.0.0", prog_name="youtube-tool")
+def cli():
+    """YouTube Search Tool CLI - Tìm kiếm và tải video YouTube"""
+    pass
+
+
+@cli.command()
+@click.argument('query')
+@click.option('--max-results', '-n', default=10, help='Số lượng kết quả tối đa')
+@click.option('--json', 'output_json', is_flag=True, help='Xuất kết quả dạng JSON')
+def search(query, max_results, output_json):
+    """Tìm kiếm video trên YouTube"""
     tool = YouTubeSearchTool()
+    videos = tool.search_videos(query, max_results)
     
-    while True:
-        print("\n=== CÔNG CỤ TÌM KIẾM YOUTUBE ===")
-        print("1. Tìm kiếm video")
-        print("2. Lấy thông tin chi tiết video")
-        print("3. Tải phụ đề video")
-        print("4. Thoát")
-        
-        choice = input("\nChọn chức năng (1-4): ").strip()
-        
-        if choice == '1':
-            query = input("Nhập từ khóa tìm kiếm: ").strip()
-            if query:
-                max_results = input("Số kết quả (mặc định 10): ").strip()
-                max_results = int(max_results) if max_results.isdigit() else 10
-                
-                print(f"\nĐang tìm kiếm '{query}'...")
-                videos = tool.search_videos(query, max_results)
-                
-                if videos:
-                    print(f"\nTìm thấy {len(videos)} video:")
-                    print("-" * 80)
-                    for i, video in enumerate(videos, 1):
-                        print(f"{i}. {video['title']}")
-                        print(f"   Tác giả: {video['uploader']}")
-                        print(f"   Lượt xem: {tool.format_view_count(video['view_count'])}")
-                        print(f"   Thời lượng: {tool.format_duration(video['duration'])}")
-                        print(f"   URL: {video['url']}")
-                        print()
-                else:
-                    print("Không tìm thấy video nào.")
-        
-        elif choice == '2':
-            url = input("Nhập URL hoặc ID video: ").strip()
-            if url:
-                print("Đang lấy thông tin...")
-                info = tool.get_video_info(url)
-                
-                if info:
-                    print(f"\n=== THÔNG TIN VIDEO ===")
-                    print(f"Tiêu đề: {info['title']}")
-                    print(f"Tác giả: {info['uploader']}")
-                    print(f"Lượt xem: {tool.format_view_count(info['view_count'])}")
-                    print(f"Lượt thích: {tool.format_view_count(info['like_count'])}")
-                    print(f"Thời lượng: {tool.format_duration(info['duration'])}")
-                    print(f"Ngày tải lên: {info['upload_date']}")
-                    print(f"Phụ đề có sẵn: {', '.join(info['subtitles']) if info['subtitles'] else 'Không có'}")
-                    print(f"Phụ đề tự động: {', '.join(info['automatic_captions']) if info['automatic_captions'] else 'Không có'}")
-                    print(f"Mô tả: {info['description'][:200]}...")
-                else:
-                    print("Không thể lấy thông tin video.")
-        
-        elif choice == '3':
-            url = input("Nhập URL hoặc ID video: ").strip()
-            if url:
-                languages = input("Ngôn ngữ phụ đề (vi,en hoặc để trống cho tất cả): ").strip()
-                lang_list = [lang.strip() for lang in languages.split(',')] if languages else None
-                
-                print("Đang tải phụ đề...")
-                success = tool.download_subtitles(url, languages=lang_list)
-                
-                if success:
-                    print("Tải phụ đề thành công! Kiểm tra thư mục 'subtitles'.")
-                else:
-                    print("Không thể tải phụ đề.")
-        
-        elif choice == '4':
-            print("Tạm biệt!")
-            break
-        
+    if output_json:
+        click.echo(json.dumps(videos, ensure_ascii=False, indent=2))
+    else:
+        if videos:
+            click.echo(f"Tìm thấy {len(videos)} video:")
+            click.echo("-" * 60)
+            for i, video in enumerate(videos, 1):
+                click.echo(f"{i}. {video['title']}")
+                click.echo(f"   Tác giả: {video['uploader']}")
+                click.echo(f"   Lượt xem: {tool.format_view_count(video['view_count'])}")
+                click.echo(f"   Thời lượng: {tool.format_duration(video['duration'])}")
+                click.echo(f"   URL: {video['url']}")
+                click.echo()
         else:
-            print("Lựa chọn không hợp lệ!")
+            click.echo("Không tìm thấy video nào.")
+
+
+@cli.command()
+@click.argument('video_url')
+@click.option('--json', 'output_json', is_flag=True, help='Xuất kết quả dạng JSON')
+def info(video_url, output_json):
+    """Lấy thông tin chi tiết video"""
+    tool = YouTubeSearchTool()
+    video_info = tool.get_video_info(video_url)
+    
+    if video_info:
+        if output_json:
+            click.echo(json.dumps(video_info, ensure_ascii=False, indent=2))
+        else:
+            click.echo("=== THÔNG TIN VIDEO ===")
+            click.echo(f"Tiêu đề: {video_info['title']}")
+            click.echo(f"Tác giả: {video_info['uploader']}")
+            click.echo(f"Lượt xem: {tool.format_view_count(video_info['view_count'])}")
+            click.echo(f"Lượt thích: {tool.format_view_count(video_info['like_count'])}")
+            click.echo(f"Thời lượng: {tool.format_duration(video_info['duration'])}")
+            click.echo(f"Ngày tải lên: {video_info['upload_date']}")
+            click.echo(f"Phụ đề có sẵn: {', '.join(video_info['subtitles']) if video_info['subtitles'] else 'Không có'}")
+            click.echo(f"Phụ đề tự động: {', '.join(video_info['automatic_captions'][:5]) if video_info['automatic_captions'] else 'Không có'}")
+    else:
+        click.echo("Không thể lấy thông tin video.")
+
+
+@cli.command()
+@click.argument('video_url')
+@click.option('--output-dir', '-o', default='subtitles', help='Thư mục lưu phụ đề')
+@click.option('--languages', '-l', help='Ngôn ngữ phụ đề (vi,en,zh)')
+def subtitles(video_url, output_dir, languages):
+    """Tải phụ đề video"""
+    tool = YouTubeSearchTool()
+    lang_list = [lang.strip() for lang in languages.split(',')] if languages else None
+    
+    click.echo("Đang tải phụ đề...")
+    success = tool.download_subtitles(video_url, output_dir, lang_list)
+    
+    if success:
+        click.echo(f"Tải phụ đề thành công! Kiểm tra thư mục '{output_dir}'.")
+    else:
+        click.echo("Không thể tải phụ đề.")
+
+
+@cli.command()
+@click.argument('query')
+@click.option('--max-results', '-n', default=5, help='Số lượng video')
+@click.option('--output', '-o', help='File lưu danh sách URLs')
+def urls(query, max_results, output):
+    """Tìm kiếm và xuất danh sách URLs video"""
+    tool = YouTubeSearchTool()
+    videos = tool.search_videos(query, max_results)
+    
+    if videos:
+        urls_list = [video['url'] for video in videos]
+        
+        if output:
+            with open(output, 'w', encoding='utf-8') as f:
+                for url in urls_list:
+                    f.write(url + '\n')
+            click.echo(f"Đã lưu {len(urls_list)} URLs vào {output}")
+        else:
+            for url in urls_list:
+                click.echo(url)
+    else:
+        click.echo("Không tìm thấy video nào.")
 
 
 if __name__ == "__main__":
-    main()
+    cli()
