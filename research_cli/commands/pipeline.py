@@ -16,28 +16,30 @@ from typing import Optional, List
 @click.option('--sort-by', '-s', default='views', 
               type=click.Choice(['views', 'date', 'relevance']), help='Sắp xếp theo')
 @click.option('--generate', '-g', multiple=True,
-              type=click.Choice(['podcast', 'quiz', 'infographic', 'video', 'slides', 'report', 'mindmap']),
+              type=click.Choice(['podcast', 'quiz', 'flashcards', 'infographic', 'video', 'slides', 'report', 'mindmap', 'data-table']),
               help='Tạo nội dung (có thể chọn nhiều)')
 @click.option('--question', '-q', help='Câu hỏi phân tích cụ thể')
+@click.option('--language', '-l', help='Ngôn ngữ đầu ra (vi, en, zh_Hans, etc.)')
 @click.option('--output-dir', '-o', default='.', help='Thư mục lưu file')
 @click.option('--json', 'output_json', is_flag=True, help='Xuất kết quả dạng JSON')
 @click.pass_context
 def pipeline(ctx, query: str, notebook_title: Optional[str], max_videos: int, 
             min_views: int, year: Optional[int], sort_by: str, generate: tuple,
-            question: Optional[str], output_dir: str, output_json: bool):
+            question: Optional[str], language: Optional[str], output_dir: str, output_json: bool):
     """Pipeline nghiên cứu hoàn chỉnh: YouTube → NotebookLM → Analysis → Content
     
     Examples:
       # Nghiên cứu cơ bản
       research-cli pipeline "AI tools for business" -n 5 -g infographic
       
-      # Nghiên cứu chi tiết với nhiều content
+      # Nghiên cứu chi tiết với nhiều content và ngôn ngữ Việt
       research-cli pipeline "digital marketing AI 2024" --year 2024 \\
-        -g podcast -g quiz -g infographic -q "What are the main trends?"
+        -g podcast -g quiz -g infographic --language vi \\
+        -q "What are the main trends?"
       
       # Workflow như yêu cầu
       research-cli pipeline "AI tools for digital marketing content creation" \\
-        -n 5 --min-views 100000 -g infographic \\
+        -n 5 --min-views 100000 -g infographic --language vi \\
         -q "What are the biggest trends in AI for business and content creation?"
     """
     async def _pipeline():
@@ -98,6 +100,11 @@ def pipeline(ctx, query: str, notebook_title: Optional[str], max_videos: int,
                 notebook_title = f"Research: {query}"
             
             async with NotebookLMIntegration() as nlm:
+                # Set language if specified
+                if language:
+                    await nlm.set_language(language)
+                    print_info(f"🌐 Đặt ngôn ngữ: {language}")
+                
                 notebook_id = await nlm.create_research_notebook(notebook_title)
                 results["notebook_id"] = notebook_id
                 print_success(f"Đã tạo notebook: {notebook_title}")
@@ -112,13 +119,15 @@ def pipeline(ctx, query: str, notebook_title: Optional[str], max_videos: int,
                 analysis_question = question or f"Phân tích các xu hướng chính về {query}. Tóm tắt những insight quan trọng nhất."
                 print_info(f"🤔 Phân tích: {analysis_question}")
                 
-                answer = await nlm.research_query(notebook_id, analysis_question)
-                results["analysis_answer"] = answer
+                result = await nlm.research_query(notebook_id, analysis_question)
+                results["analysis_answer"] = result["answer"]
                 
                 if not output_json:
                     print_success("💡 KẾT QUẢ PHÂN TÍCH:")
                     print("=" * 60)
-                    print(answer)
+                    print(result["answer"])
+                    if result.get("references"):
+                        print(f"\n📚 Tham khảo ({len(result['references'])} nguồn)")
                     print("=" * 60)
                 
                 # Step 5: Generate content
@@ -133,40 +142,65 @@ def pipeline(ctx, query: str, notebook_title: Optional[str], max_videos: int,
                             if content_type == 'podcast':
                                 filename += '.mp3'
                                 instructions = f"Tạo podcast thú vị về {query}, tập trung vào các xu hướng chính"
-                                success = await content_gen.generate_podcast(notebook_id, instructions, filename)
+                                result = await content_gen.generate_podcast(
+                                    notebook_id, instructions, "deep-dive", "default", language, None, filename
+                                )
                             
                             elif content_type == 'quiz':
                                 filename += '.json'
-                                success = await content_gen.generate_quiz(notebook_id, 'medium', filename)
+                                result = await content_gen.generate_quiz(
+                                    notebook_id, "medium", "standard", language, None, filename, "json"
+                                )
+                            
+                            elif content_type == 'flashcards':
+                                filename += '.json'
+                                result = await content_gen.generate_flashcards(
+                                    notebook_id, "medium", "standard", language, None, filename, "json"
+                                )
                             
                             elif content_type == 'infographic':
                                 filename += '.png'
                                 instructions = f"Tạo infographic blueprint-style về các xu hướng {query}"
-                                success = await content_gen.generate_infographic(notebook_id, instructions, filename)
+                                result = await content_gen.generate_infographic(
+                                    notebook_id, instructions, "landscape", "standard", language, None, filename
+                                )
                             
                             elif content_type == 'video':
                                 filename += '.mp4'
                                 instructions = f"Tạo video giải thích về {query} và các xu hướng chính"
-                                success = await content_gen.generate_video(notebook_id, instructions, filename)
+                                result = await content_gen.generate_video(
+                                    notebook_id, instructions, "explainer", "auto", language, None, filename
+                                )
                             
                             elif content_type == 'slides':
                                 filename += '.pdf'
                                 instructions = f"Tạo slide deck tổng hợp về {query}"
-                                success = await content_gen.generate_slide_deck(notebook_id, instructions, filename)
+                                result = await content_gen.generate_slide_deck(
+                                    notebook_id, instructions, "detailed", "default", language, None, filename, "pdf"
+                                )
                             
                             elif content_type == 'report':
                                 filename += '.md'
-                                success = await content_gen.generate_report(notebook_id, 'briefing-doc', filename)
+                                result = await content_gen.generate_report(
+                                    notebook_id, "briefing-doc", None, language, None, filename
+                                )
                             
                             elif content_type == 'mindmap':
                                 filename += '.json'
-                                success = await content_gen.generate_mind_map(notebook_id, filename)
+                                result = await content_gen.generate_mind_map(notebook_id, language, None, filename)
                             
-                            if success:
-                                results["generated_content"][content_type] = filename
-                                print_success(f"  ✅ {content_type}: {filename}")
+                            elif content_type == 'data-table':
+                                filename += '.csv'
+                                description = f"Tạo bảng dữ liệu so sánh các khía cạnh chính về {query}"
+                                result = await content_gen.generate_data_table(
+                                    notebook_id, description, language, None, filename
+                                )
+                            
+                            if result.get('success'):
+                                results["generated_content"][content_type] = result['file']
+                                print_success(f"  ✅ {content_type}: {result['file']}")
                             else:
-                                print_error(f"  ❌ Không thể tạo {content_type}")
+                                print_error(f"  ❌ Không thể tạo {content_type}: {result.get('error', 'Unknown error')}")
                                 
                         except Exception as e:
                             print_error(f"  ❌ Lỗi tạo {content_type}: {e}")

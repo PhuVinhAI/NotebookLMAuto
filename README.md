@@ -1,247 +1,231 @@
-# YouTube CLI Pro - Professional YouTube Search & Analysis Tool
+# Research CLI - YouTube Search & NotebookLM Integration
 
-[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/youtube-cli/youtube-cli-pro)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/research-cli/research-cli)
 [![Python](https://img.shields.io/badge/python-3.8+-green.svg)](https://python.org)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-A professional-grade command-line tool for YouTube video search, analysis, and data extraction. Built with enterprise-level architecture for scalability and maintainability.
+Công cụ dòng lệnh chuyên nghiệp để tìm kiếm YouTube, phân tích video và tích hợp với NotebookLM. Được xây dựng với kiến trúc doanh nghiệp để mở rộng và bảo trì dễ dàng.
 
-## 🚀 Features
+## 🚀 Tính năng chính
 
-### Core Capabilities
-- **Advanced Search**: Multi-criteria search with intelligent filtering
-- **Trending Detection**: Find viral and high-engagement videos
-- **Data Export**: Multiple formats (JSON, CSV, URLs)
-- **Video Analysis**: Detailed metadata extraction
-- **Subtitle Download**: Multi-language caption support
-- **NotebookLM Integration**: Seamless workflow integration
+### Khả năng cốt lõi
+- **Pipeline tự động**: Workflow hoàn chỉnh từ YouTube đến NotebookLM
+- **Tìm kiếm nâng cao**: Tìm kiếm đa tiêu chí với bộ lọc thông minh
+- **Phân tích video**: Trích xuất metadata chi tiết
+- **Xuất dữ liệu**: Nhiều định dạng (JSON, CSV, URLs)
+- **Tích hợp NotebookLM**: Tạo nội dung tự động (podcast, quiz, infographic, video)
 
-### Professional Features
-- **Enterprise Architecture**: Modular, scalable codebase
-- **Advanced Filtering**: View count, duration, date, channel filters
-- **Smart Sorting**: Multiple sorting algorithms including engagement ranking
-- **Batch Processing**: Handle large datasets efficiently
-- **Error Handling**: Robust error recovery and logging
-- **Extensible Design**: Easy to add new features and integrations
+### Tính năng chuyên nghiệp
+- **Kiến trúc doanh nghiệp**: Codebase modular, có thể mở rộng
+- **Bộ lọc nâng cao**: Lượt xem, thời lượng, ngày tháng, năm, kênh
+- **Sắp xếp thông minh**: Nhiều thuật toán sắp xếp
+- **Xử lý hàng loạt**: Xử lý dataset lớn hiệu quả
+- **Xử lý lỗi**: Khôi phục lỗi mạnh mẽ và logging
 
-## 📦 Installation
+## 📦 Cài đặt
 
-### Quick Install
+### Cài đặt nhanh
 ```bash
-pip install yt-dlp click requests
+pip install yt-dlp click requests notebooklm-py
 ```
 
-### Development Install
+### Cài đặt NotebookLM (tùy chọn)
 ```bash
-git clone https://github.com/youtube-cli/youtube-cli-pro.git
-cd youtube-cli-pro
+# Cài đặt với hỗ trợ browser login
+pip install "notebooklm-py[browser]"
+playwright install chromium
+
+# Đăng nhập NotebookLM
+notebooklm login
+notebooklm skill install
+```
+
+### Cài đặt development
+```bash
+git clone https://github.com/research-cli/research-cli.git
+cd research-cli
 pip install -e .
 ```
 
-### Prerequisites
-- Python 3.8+
-- yt-dlp (latest version recommended)
-- Internet connection
+## 🎯 Bắt đầu nhanh
 
-## 🎯 Quick Start
-
-### Basic Search
+### Pipeline hoàn chỉnh (Khuyến nghị)
 ```bash
-python -m youtube_cli.main search "AI tools for business" -n 5
+# Workflow như yêu cầu: YouTube → NotebookLM → Analysis → Infographic
+python -m research_cli pipeline "AI tools for digital marketing content creation" \
+  -n 5 --min-views 100000 -g infographic \
+  -q "What are the biggest trends in AI for business and content creation?"
 ```
 
-### Find Trending Videos
+### Tìm kiếm cơ bản
 ```bash
-python -m youtube_cli.main trending "digital marketing" --min-views 100000
+python -m research_cli search "AI tools for business" -n 5 --min-views 50000
 ```
 
-### Export URLs for NotebookLM
+### Tìm video theo năm
 ```bash
-python -m youtube_cli.main export "AI trends 2026" --format urls -o ai_videos.txt
+python -m research_cli search "AI trends" --year 2024 --min-views 100000
 ```
 
-### Get Video Details
+### Xuất URLs cho NotebookLM
 ```bash
-python -m youtube_cli.main info "https://youtube.com/watch?v=VIDEO_ID"
+python -m research_cli export "AI trends 2026" --format urls -o ai_videos.txt
 ```
 
-## 📋 Command Reference
+## 📋 Tham khảo lệnh
+
+### Pipeline Command (Khuyến nghị sử dụng)
+```bash
+python -m research_cli pipeline "query" [OPTIONS]
+
+Options:
+  -t, --notebook-title TEXT     Tiêu đề notebook (tự động nếu không có)
+  -n, --max-videos INTEGER      Số video tối đa (default: 5)
+  -m, --min-views INTEGER       Lượt xem tối thiểu (default: 50000)
+  --year INTEGER                Lọc theo năm (VD: 2024)
+  -s, --sort-by [views|date|relevance]  Sắp xếp theo
+  -g, --generate [podcast|quiz|infographic|video|slides|report|mindmap]
+                                Tạo nội dung (có thể chọn nhiều)
+  -q, --question TEXT           Câu hỏi phân tích cụ thể
+  -o, --output-dir TEXT         Thư mục lưu file (default: .)
+  --json                        Xuất kết quả dạng JSON
+```
 
 ### Search Command
 ```bash
-python -m youtube_cli.main search "query" [OPTIONS]
+python -m research_cli search "query" [OPTIONS]
 
 Options:
-  -n, --max-results INTEGER     Number of results (default: 10)
+  -n, --max-results INTEGER     Số kết quả (default: 10)
   -s, --sort-by [relevance|views|date|duration|title|channel]
-  -m, --min-views INTEGER       Minimum view count filter
-  --max-views INTEGER           Maximum view count filter
-  --min-duration INTEGER        Minimum duration in seconds
-  --max-duration INTEGER        Maximum duration in seconds
-  --days-ago INTEGER            Videos from last N days
-  --channels TEXT               Filter by channel names (comma-separated)
-  --json                        Output as JSON
-  --verbose                     Detailed output
-```
-
-### Trending Command
-```bash
-python -m youtube_cli.main trending "query" [OPTIONS]
-
-Options:
-  -m, --min-views INTEGER       Minimum views for trending (default: 100K)
-  -n, --max-results INTEGER     Number of results (default: 10)
-  --days-ago INTEGER            Consider videos from last N days (default: 365)
-  --json                        Output as JSON
+  -m, --min-views INTEGER       Lượt xem tối thiểu
+  --max-views INTEGER           Lượt xem tối đa
+  --min-duration INTEGER        Thời lượng tối thiểu (giây)
+  --max-duration INTEGER        Thời lượng tối đa (giây)
+  --days-ago INTEGER            Video trong N ngày qua
+  --year INTEGER                Lọc theo năm (VD: 2024)
+  --after-date TEXT             Video sau ngày này (YYYY-MM-DD)
+  --before-date TEXT            Video trước ngày này (YYYY-MM-DD)
+  --channels TEXT               Lọc theo kênh (phân cách bằng dấu phẩy)
+  --json                        Xuất kết quả dạng JSON
+  -v, --verbose                 Hiển thị thông tin chi tiết
 ```
 
 ### Export Command
 ```bash
-python -m youtube_cli.main export "query" [OPTIONS]
+python -m research_cli export "query" [OPTIONS]
 
 Options:
-  --format [urls|json|csv]      Export format (default: urls)
-  -o, --output TEXT             Output filename
-  -n, --max-results INTEGER     Number of videos (default: 10)
-  -s, --sort-by [views|date|duration|relevance]
-  -m, --min-views INTEGER       Minimum view count (default: 10K)
+  --format [urls|json|csv]      Định dạng xuất (default: urls)
+  -o, --output TEXT             File đầu ra
+  -n, --max-results INTEGER     Số video (default: 10)
+  --sort-by [views|date|duration|relevance]
+  -m, --min-views INTEGER       Lượt xem tối thiểu
+  --year INTEGER                Lọc theo năm
 ```
 
-### Info Command
+### NotebookLM Commands
 ```bash
-python -m youtube_cli.main info "VIDEO_URL" [OPTIONS]
+# Quản lý notebook
+python -m research_cli notebook create "Research Title"
+python -m research_cli notebook list
+python -m research_cli notebook sources NOTEBOOK_ID
+python -m research_cli notebook ask NOTEBOOK_ID "question"
+python -m research_cli notebook delete NOTEBOOK_ID
 
-Options:
-  --json                        Output as JSON
+# Tạo nội dung
+python -m research_cli generate podcast NOTEBOOK_ID -o podcast.mp3
+python -m research_cli generate quiz NOTEBOOK_ID -d medium -o quiz.json
+python -m research_cli generate infographic NOTEBOOK_ID -o infographic.png
+python -m research_cli generate video NOTEBOOK_ID -o video.mp4
+python -m research_cli generate slides NOTEBOOK_ID -o slides.pdf
+python -m research_cli generate report NOTEBOOK_ID -f briefing-doc -o report.md
+python -m research_cli generate mindmap NOTEBOOK_ID -o mindmap.json
 ```
 
-## 🔧 Advanced Usage
+## 🔧 Ví dụ sử dụng
 
-### Complex Filtering
+### Workflow nghiên cứu hoàn chỉnh
 ```bash
-# Find recent high-quality tutorials
-python -m youtube_cli.main search "Python tutorial" \
+# Nghiên cứu AI tools với nhiều nội dung
+python -m research_cli pipeline "AI business tools 2024" \
+  --year 2024 \
+  --min-views 100000 \
+  -n 5 \
+  -g podcast -g quiz -g infographic \
+  -q "What are the most practical AI tools for small businesses?"
+```
+
+### Tìm kiếm nâng cao
+```bash
+# Tìm tutorial chất lượng cao gần đây
+python -m research_cli search "Python machine learning" \
   --min-views 50000 \
   --min-duration 600 \
-  --days-ago 90 \
+  --year 2024 \
   --sort-by views \
   -n 10
 ```
 
-### Batch Export for Research
+### Xuất dữ liệu cho phân tích
 ```bash
-# Export trending AI videos for analysis
-python -m youtube_cli.main export "artificial intelligence 2026" \
+# Xuất CSV để phân tích
+python -m research_cli export "digital marketing trends 2024" \
   --format csv \
   --min-views 100000 \
-  --sort-by views \
-  -o ai_research.csv
+  --year 2024 \
+  -o marketing_analysis.csv
 ```
 
-### NotebookLM Integration Workflow
+### Workflow thủ công (linh hoạt)
 ```bash
-# 1. Find and export video URLs
-python -m youtube_cli.main export "digital marketing AI" \
-  --format urls \
-  --min-views 50000 \
-  -n 5 \
-  -o marketing_videos.txt
+# 1. Tìm và xuất URLs
+python -m research_cli export "AI content creation" \
+  --format urls --min-views 50000 -n 5 -o videos.txt
 
-# 2. Create NotebookLM notebook
-notebooklm create "AI Marketing Research 2026"
+# 2. Tạo notebook
+python -m research_cli notebook create "AI Content Research"
 
-# 3. Add videos as sources
-while read url; do notebooklm source add "$url"; done < marketing_videos.txt
+# 3. Thêm sources (cần notebook ID từ bước 2)
+python -m research_cli notebook add-sources NOTEBOOK_ID $(cat videos.txt)
 
-# 4. Analyze content
-notebooklm ask "What are the main AI marketing trends discussed?"
+# 4. Phân tích
+python -m research_cli notebook ask NOTEBOOK_ID "What are the main trends?"
+
+# 5. Tạo nội dung
+python -m research_cli generate infographic NOTEBOOK_ID -o trends.png
 ```
 
-## 🏗️ Architecture
+## 🏗️ Kiến trúc dự án
 
-### Project Structure
+### Cấu trúc thư mục
 ```
-youtube_cli/
+research_cli/
 ├── __init__.py              # Package initialization
 ├── main.py                  # CLI entry point
-├── core/                    # Core functionality
-│   ├── __init__.py
-│   ├── youtube_client.py    # YouTube API client
-│   ├── filters.py           # Video filtering logic
-│   └── sorters.py           # Sorting algorithms
 ├── commands/                # CLI commands
 │   ├── __init__.py
-│   ├── search.py           # Search command
-│   ├── trending.py         # Trending command
-│   └── export.py           # Export command
-└── utils/                   # Utilities
+│   ├── search.py           # Tìm kiếm YouTube
+│   ├── info.py             # Thông tin video
+│   ├── export.py           # Xuất dữ liệu
+│   ├── notebook.py         # Quản lý NotebookLM
+│   ├── generate.py         # Tạo nội dung
+│   └── pipeline.py         # Workflow tự động
+├── core/                    # Core functionality
+│   ├── __init__.py
+│   ├── youtube_client.py   # YouTube client
+│   ├── filters.py          # Bộ lọc video
+│   └── sorters.py          # Thuật toán sắp xếp
+├── integrations/           # Tích hợp bên ngoài
+│   ├── __init__.py
+│   ├── notebooklm_client.py    # NotebookLM client
+│   └── content_generators.py   # Tạo nội dung
+└── utils/                  # Tiện ích
     ├── __init__.py
-    ├── output.py           # Output formatting
-    └── config.py           # Configuration management
+    └── output.py           # Định dạng output
 ```
 
-### Key Components
-
-#### YouTubeClient
-- Core YouTube interaction logic
-- Video search and metadata extraction
-- Subtitle downloading capabilities
-- Error handling and retry logic
-
-#### VideoFilter
-- Advanced filtering by view count, duration, date
-- Channel-based filtering
-- Trending video detection
-- Duplicate removal
-
-#### VideoSorter
-- Multiple sorting algorithms
-- Engagement score calculation
-- Custom ranking systems
-
-## 🔌 Integration Examples
-
-### Python API Usage
-```python
-from youtube_cli.core import YouTubeClient, VideoFilter, VideoSorter
-
-# Initialize client
-client = YouTubeClient()
-
-# Search videos
-videos = client.search_videos("AI tools", max_results=20)
-
-# Apply filters
-filtered = VideoFilter.by_view_count(videos, min_views=100000)
-trending = VideoFilter.trending_videos(filtered, recent_days=30)
-
-# Sort by engagement
-sorted_videos = VideoSorter.rank_by_engagement(trending)
-
-# Get top 5
-top_videos = sorted_videos[:5]
-```
-
-### Custom Workflow Integration
-```python
-import json
-from youtube_cli.core import YouTubeClient
-from youtube_cli.utils.output import format_json_output
-
-def research_pipeline(topic, min_views=50000):
-    """Custom research pipeline"""
-    client = YouTubeClient()
-    
-    # Search and filter
-    videos = client.search_videos(f"{topic} 2026", max_results=50)
-    high_quality = VideoFilter.by_view_count(videos, min_views)
-    recent = VideoFilter.by_upload_date(high_quality, days_ago=180)
-    
-    # Export for analysis
-    return format_json_output(recent)
-```
-
-## 📊 Output Formats
+## 📊 Định dạng output
 
 ### JSON Output
 ```json
@@ -251,37 +235,40 @@ def research_pipeline(topic, min_views=50000):
   "view_count": 1250000,
   "duration": 1820,
   "upload_date": "20241215",
-  "upload_date_formatted": "15/12/2024",
   "url": "https://youtube.com/watch?v=...",
   "description": "Comprehensive guide to AI tools...",
-  "tags": ["AI", "business", "automation"],
-  "subtitles": ["en", "es", "fr"]
+  "tags": ["AI", "business", "automation"]
 }
 ```
 
-### CSV Export
-```csv
-title,uploader,view_count,duration,upload_date_formatted,url
-"AI Business Tools 2026","TechChannel",1500000,1200,"15/12/2024","https://youtube.com/..."
+### Pipeline Results
+```json
+{
+  "query": "AI tools for business",
+  "notebook_id": "abc123...",
+  "videos_found": 5,
+  "videos_added": 5,
+  "analysis_answer": "Key trends include...",
+  "generated_content": {
+    "infographic": "./AI_tools_infographic.png",
+    "podcast": "./AI_tools_podcast.mp3"
+  }
+}
 ```
 
-## 🚨 Error Handling
+## 🚨 Xử lý lỗi
 
-The tool includes comprehensive error handling:
-
-- **Network Issues**: Automatic retry with exponential backoff
-- **API Limits**: Rate limiting detection and graceful degradation
-- **Invalid URLs**: Clear error messages and suggestions
-- **Missing Data**: Fallback values and warnings
-- **File Operations**: Permission and disk space checks
-
-## 🔧 Troubleshooting
-
-### Common Issues
+### Lỗi thường gặp
 
 **Import Errors**
 ```bash
-pip install --upgrade yt-dlp click requests
+pip install --upgrade yt-dlp click requests notebooklm-py
+```
+
+**NotebookLM Authentication**
+```bash
+notebooklm login
+notebooklm auth check
 ```
 
 **API Extraction Failures**
@@ -289,52 +276,62 @@ pip install --upgrade yt-dlp click requests
 pip install --upgrade yt-dlp
 ```
 
-**No Results Found**
-- Try broader search terms
-- Reduce filtering criteria
-- Check internet connection
-
-**Performance Issues**
-- Reduce `max_results` for large searches
-- Use specific filters to narrow results
-- Enable verbose mode for debugging
+**Không tìm thấy kết quả**
+- Thử từ khóa rộng hơn
+- Giảm tiêu chí lọc
+- Kiểm tra kết nối internet
 
 ### Debug Mode
 ```bash
-python -m youtube_cli.main search "query" --verbose
+python -m research_cli search "query" --verbose
 ```
 
-## 🤝 Contributing
+## 🎯 Use Cases
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+### 1. Nghiên cứu thị trường
+```bash
+python -m research_cli pipeline "fintech trends 2024" \
+  --year 2024 -n 10 -g report -g mindmap \
+  -q "What are the emerging fintech trends?"
+```
+
+### 2. Tạo nội dung giáo dục
+```bash
+python -m research_cli pipeline "machine learning basics" \
+  -n 5 -g quiz -g slides \
+  -q "Create educational content for beginners"
+```
+
+### 3. Phân tích đối thủ
+```bash
+python -m research_cli pipeline "competitor marketing strategies" \
+  --min-views 100000 -g infographic \
+  -q "Analyze competitor marketing approaches"
+```
+
+## 🤝 Đóng góp
+
+Chúng tôi hoan nghênh đóng góp! Vui lòng xem [Contributing Guide](CONTRIBUTING.md).
 
 ### Development Setup
 ```bash
-git clone https://github.com/youtube-cli/youtube-cli-pro.git
-cd youtube-cli-pro
+git clone https://github.com/research-cli/research-cli.git
+cd research-cli
 pip install -e ".[dev]"
 pytest tests/
 ```
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Dự án này được cấp phép theo MIT License - xem file [LICENSE](LICENSE).
 
 ## 🙏 Acknowledgments
 
-- [yt-dlp](https://github.com/yt-dlp/yt-dlp) - Powerful YouTube data extraction
-- [Click](https://click.palletsprojects.com/) - Command line interface framework
-- [NotebookLM](https://notebooklm.google.com/) - AI-powered research platform
-
-## 📞 Support
-
-- 📧 Email: support@youtube-cli-pro.com
-- 🐛 Issues: [GitHub Issues](https://github.com/youtube-cli/youtube-cli-pro/issues)
-- 📖 Documentation: [Read the Docs](https://youtube-cli-pro.readthedocs.io/)
-- 💬 Discussions: [GitHub Discussions](https://github.com/youtube-cli/youtube-cli-pro/discussions)
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp) - YouTube data extraction
+- [Click](https://click.palletsprojects.com/) - CLI framework
+- [NotebookLM](https://notebooklm.google.com/) - AI research platform
+- [notebooklm-py](https://github.com/teng-lin/notebooklm-py) - Python API
 
 ---
 
-**Made with ❤️ for researchers, marketers, and content creators**#   N o t e b o o k L M A u t o 
- 
- 
+**Được tạo với ❤️ cho các nhà nghiên cứu, marketer và content creator**

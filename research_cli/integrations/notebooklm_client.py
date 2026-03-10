@@ -4,6 +4,8 @@ NotebookLM Python API Integration - Core Client
 
 import asyncio
 import logging
+import subprocess
+import sys
 from typing import List, Dict, Optional
 from pathlib import Path
 
@@ -28,6 +30,8 @@ class NotebookLMIntegration:
     
     async def __aenter__(self):
         """Async context manager entry"""
+        # Check auth and auto-login if needed
+        await self._ensure_authenticated()
         self.client = await NotebookLMClient.from_storage()
         return self
     
@@ -35,6 +39,35 @@ class NotebookLMIntegration:
         """Async context manager exit"""
         if self.client:
             await self.client.close()
+    
+    async def _ensure_authenticated(self):
+        """Check authentication and auto-login if needed"""
+        try:
+            # Check if already authenticated
+            result = subprocess.run(['notebooklm', 'auth', 'check'], 
+                                  capture_output=True, text=True, timeout=10)
+            
+            if result.returncode == 0:
+                logger.info("NotebookLM already authenticated")
+                return
+            
+            # Not authenticated, try to login
+            logger.info("NotebookLM not authenticated, attempting login...")
+            result = subprocess.run(['notebooklm', 'login'], 
+                                  timeout=60)
+            
+            if result.returncode != 0:
+                raise Exception("NotebookLM login failed")
+                
+            logger.info("NotebookLM authentication successful")
+            
+        except subprocess.TimeoutExpired:
+            raise Exception("NotebookLM authentication timeout")
+        except FileNotFoundError:
+            raise Exception("notebooklm CLI not found. Run: pip install notebooklm-py")
+        except Exception as e:
+            logger.error(f"Authentication check failed: {e}")
+            raise
     
     async def create_research_notebook(self, title: str) -> str:
         """Create a new research notebook
@@ -86,20 +119,31 @@ class NotebookLMIntegration:
         
         return source_ids
     
-    async def research_query(self, notebook_id: str, question: str) -> str:
+    async def research_query(self, notebook_id: str, question: str, 
+                           source_ids: Optional[List[str]] = None) -> Dict:
         """Ask a research question to the notebook
         
         Args:
             notebook_id: Notebook ID
             question: Research question
+            source_ids: Specific sources to query (optional)
             
         Returns:
-            Answer from NotebookLM
+            Dict with answer and references
         """
         try:
-            result = await self.client.chat.ask(notebook_id, question)
+            if source_ids:
+                result = await self.client.chat.ask(notebook_id, question, source_ids=source_ids)
+            else:
+                result = await self.client.chat.ask(notebook_id, question)
+            
             logger.info(f"Research query completed: {question}")
-            return result.answer
+            
+            return {
+                "answer": result.answer,
+                "conversation_id": result.conversation_id,
+                "references": getattr(result, 'references', [])
+            }
         except Exception as e:
             logger.error(f"Research query failed: {e}")
             raise
@@ -108,7 +152,7 @@ class NotebookLMIntegration:
         """List all notebooks"""
         try:
             notebooks = await self.client.notebooks.list()
-            return [{"id": nb.id, "title": nb.title} for nb in notebooks]
+            return [{"id": nb.id, "title": nb.title, "created_at": getattr(nb, 'created_at', '')} for nb in notebooks]
         except Exception as e:
             logger.error(f"Failed to list notebooks: {e}")
             raise
@@ -117,9 +161,18 @@ class NotebookLMIntegration:
         """List sources in notebook"""
         try:
             sources = await self.client.sources.list(notebook_id)
-            return [{"id": src.id, "title": src.title, "status": src.status} for src in sources]
+            return [{"id": src.id, "title": src.title, "status": src.status, "type": getattr(src, 'type', '')} for src in sources]
         except Exception as e:
             logger.error(f"Failed to list sources: {e}")
+            raise
+    
+    async def list_artifacts(self, notebook_id: str) -> List[Dict]:
+        """List artifacts in notebook"""
+        try:
+            artifacts = await self.client.artifacts.list(notebook_id)
+            return [{"id": art.id, "title": art.title, "type": art.type, "status": art.status} for art in artifacts]
+        except Exception as e:
+            logger.error(f"Failed to list artifacts: {e}")
             raise
     
     async def delete_notebook(self, notebook_id: str) -> bool:
@@ -131,3 +184,53 @@ class NotebookLMIntegration:
         except Exception as e:
             logger.error(f"Failed to delete notebook: {e}")
             return False
+    
+    async def get_source_fulltext(self, notebook_id: str, source_id: str) -> Dict:
+        """Get full text content of a source"""
+        try:
+            fulltext = await self.client.sources.get_fulltext(notebook_id, source_id)
+            return {
+                "source_id": source_id,
+                "title": fulltext.title,
+                "content": fulltext.content,
+                "char_count": len(fulltext.content)
+            }
+        except Exception as e:
+            logger.error(f"Failed to get source fulltext: {e}")
+            raise
+    
+    async def wait_for_source_processing(self, notebook_id: str, source_id: str, timeout: int = 300) -> bool:
+        """Wait for source to be processed"""
+        try:
+            await self.client.sources.wait_for_processing(notebook_id, source_id, timeout=timeout)
+            return True
+        except Exception as e:
+            logger.error(f"Source processing timeout or failed: {e}")
+            return False
+    
+    async def set_language(self, language_code: str) -> bool:
+        """Set language for content generation"""
+        try:
+            await self.client.language.set(language_code)
+            logger.info(f"Language set to: {language_code}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to set language: {e}")
+            return False
+    
+    async def get_language(self) -> str:
+        """Get current language setting"""
+        try:
+            return await self.client.language.get()
+        except Exception as e:
+            logger.error(f"Failed to get language: {e}")
+            return "en"  # Default to English
+    
+    async def list_supported_languages(self) -> List[Dict]:
+        """List all supported languages"""
+        try:
+            languages = await self.client.language.list()
+            return [{"code": lang.code, "name": lang.name, "native_name": lang.native_name} for lang in languages]
+        except Exception as e:
+            logger.error(f"Failed to list languages: {e}")
+            return []
