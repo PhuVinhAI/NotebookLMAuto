@@ -1,0 +1,88 @@
+{
+  "name": "Marketing trong Kỷ nguyên AI",
+  "children": [
+    {
+      "name": "Bối cảnh & Lịch sử",
+      "children": [
+        {
+          "name": "30 năm trước: Công cụ văn phòng"
+        },
+        {
+          "name": "Kỳ vọng: Tăng năng suất, giảm giờ làm"
+        },
+        {
+          "name": "Thực tế: Công việc phức tạp hơn, dữ liệu bùng nổ"
+        }
+      ]
+    },
+    {
+      "name": "Cuộc cách mạng năng suất AI",
+      "children": [
+        {
+          "name": "Tác động marketing lên đến 50%"
+        },
+        {
+          "name": "Cải thiện hiệu suất não phải thêm 40%"
+        },
+        {
+          "name": "Nguy cơ: Quá tải nội dung & mất sự khác biệt"
+        }
+      ]
+    },
+    {
+      "name": "Chiến lược Phát triển 'Não trái AI'",
+      "children": [
+        {
+          "name": "Tái kỹ năng & Tổ chức lại"
+        },
+        {
+          "name": "Xây dựng đội ngũ khoa học dữ liệu"
+        },
+        {
+          "name": "Dự đoán kết quả & Phân tích hiệu quả"
+        },
+        {
+          "name": "Mở rộng hệ sinh thái dữ liệu đối tác"
+        }
+      ]
+    },
+    {
+      "name": "Bảo vệ & Nuôi dưỡng 'Não phải con người'",
+      "children": [
+        {
+          "name": "Xác định tài năng sáng tạo thực thụ"
+        },
+        {
+          "name": "Sử dụng AI để lấy cảm hứng & nhân rộng"
+        },
+        {
+          "name": "Cấm dùng AI tạo ý tưởng gốc"
+        },
+        {
+          "name": "Duy trì dòng chảy cảm xúc & bản sắc"
+        }
+      ]
+    },
+    {
+      "name": "Lời khuyên cho Marketers",
+      "children": [
+        {
+          "name": "Nhóm Sáng tạo",
+          "children": [
+            {
+              "name": "Trau dồi siêu năng lực khác biệt"
+            }
+          ]
+        },
+        {
+          "name": "Nhóm Lý trí/Dữ liệu",
+          "children": [
+            {
+              "name": "Chuyên môn hóa công nghệ & AI dự đoán"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

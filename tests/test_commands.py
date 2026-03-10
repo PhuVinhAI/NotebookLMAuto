@@ -174,48 +174,58 @@ def test_command_validation():
         return False
 
 
-@patch('research_cli.core.youtube_client.YouTubeClient')
-def test_search_command_mock(mock_client):
-    """Test search command with mocked client"""
+def test_search_command_execution():
+    """Test search command execution with proper mocking"""
     try:
-        # Mock the YouTube client
-        mock_instance = Mock()
-        mock_instance.search_videos.return_value = [
-            {
-                'title': 'Test Video',
-                'uploader': 'Test Channel',
-                'view_count': 100000,
-                'duration': 600,
-                'url': 'https://youtube.com/watch?v=test',
-                'video_id': 'test',
-                'upload_date': '20240101'
-            }
-        ]
-        mock_client.return_value = mock_instance
-        
-        # Mock the filter and sorter classes
-        with patch('research_cli.commands.search.VideoFilter') as mock_filter:
-            with patch('research_cli.commands.search.VideoSorter') as mock_sorter:
-                mock_filter.by_view_count.return_value = mock_instance.search_videos.return_value
-                mock_filter.by_duration.return_value = mock_instance.search_videos.return_value
-                mock_filter.by_upload_date.return_value = mock_instance.search_videos.return_value
-                mock_filter.by_channel.return_value = mock_instance.search_videos.return_value
-                mock_filter.remove_duplicates.return_value = mock_instance.search_videos.return_value
-                mock_sorter.sort_videos.return_value = mock_instance.search_videos.return_value
-                
-                # Test search command
-                runner = CliRunner()
-                result = runner.invoke(cli, ['search', 'test query', '-n', '1'])
-                
-                # Should not crash (exit code 0 or handled gracefully)
-                if result.exit_code in [0, 1]:  # Allow for expected errors
-                    mock_instance.search_videos.assert_called_once()
-                    print("✅ Search command execution (mocked): PASS")
-                    return True
-                else:
-                    print(f"❌ Search command execution: FAIL - exit code {result.exit_code}")
-                    print(f"Output: {result.output}")
-                    return False
+        # Mock all the necessary components
+        with patch('research_cli.commands.search.YouTubeClient') as mock_client_class:
+            with patch('research_cli.commands.search.VideoFilter') as mock_filter:
+                with patch('research_cli.commands.search.VideoSorter') as mock_sorter:
+                    with patch('research_cli.commands.search.click.echo') as mock_echo:
+                        
+                        # Setup mock client instance
+                        mock_client_instance = Mock()
+                        mock_videos = [
+                            {
+                                'title': 'Test Video',
+                                'uploader': 'Test Channel',
+                                'view_count': 100000,
+                                'duration': 600,
+                                'url': 'https://youtube.com/watch?v=test',
+                                'video_id': 'test',
+                                'upload_date': '20240101'
+                            }
+                        ]
+                        mock_client_instance.search_videos.return_value = mock_videos
+                        mock_client_class.return_value = mock_client_instance
+                        
+                        # Setup filter and sorter mocks
+                        mock_filter.by_view_count.return_value = mock_videos
+                        mock_filter.by_duration.return_value = mock_videos
+                        mock_filter.by_upload_date.return_value = mock_videos
+                        mock_filter.by_channel.return_value = mock_videos
+                        mock_filter.remove_duplicates.return_value = mock_videos
+                        mock_sorter.sort_videos.return_value = mock_videos
+                        
+                        # Mock format functions
+                        with patch('research_cli.commands.search.format_video_list') as mock_format:
+                            mock_format.return_value = "Formatted video list"
+                            
+                            # Test search command
+                            runner = CliRunner()
+                            result = runner.invoke(cli, ['search', 'test query', '-n', '1'])
+                            
+                            # Check if command executed without crashing
+                            if result.exit_code == 0:
+                                # Verify that search_videos was called
+                                mock_client_instance.search_videos.assert_called_once()
+                                print("✅ Search command execution: PASS")
+                                return True
+                            else:
+                                print(f"❌ Search command execution: FAIL - exit code {result.exit_code}")
+                                print(f"Output: {result.output}")
+                                return False
+                                
     except Exception as e:
         print(f"❌ Search command execution: FAIL - {e}")
         return False
@@ -233,7 +243,7 @@ def run_all_tests():
         test_notebook_commands_help,
         test_generate_commands_help,
         test_command_validation,
-        test_search_command_mock
+        test_search_command_execution
     ]
     
     passed = 0

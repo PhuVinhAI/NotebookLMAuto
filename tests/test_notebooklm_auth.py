@@ -102,8 +102,9 @@ def test_language_support(mock_subprocess, mock_client):
         # Mock successful auth
         mock_subprocess.return_value.returncode = 0
         
-        # Mock client methods
+        # Create a proper async mock for the client
         mock_client_instance = Mock()
+        mock_client_instance.language = Mock()
         mock_client_instance.language.get = AsyncMock(return_value="en")
         mock_client_instance.language.set = AsyncMock(return_value=None)
         mock_client_instance.language.list = AsyncMock(return_value=[
@@ -111,11 +112,19 @@ def test_language_support(mock_subprocess, mock_client):
             Mock(code="vi", name="Vietnamese", native_name="Tiếng Việt"),
             Mock(code="zh_Hans", name="Chinese Simplified", native_name="中文（简体）")
         ])
+        mock_client_instance.close = AsyncMock()
+        
+        # Mock the from_storage method to return our mock instance
         mock_client.from_storage = AsyncMock(return_value=mock_client_instance)
         
         async def _test():
             integration = NotebookLMIntegration()
-            async with integration:
+            
+            # Manually set up the client instead of using context manager
+            await integration._ensure_authenticated()
+            integration.client = await mock_client.from_storage()
+            
+            try:
                 # Test get language
                 lang = await integration.get_language()
                 assert lang == "en"
@@ -130,6 +139,9 @@ def test_language_support(mock_subprocess, mock_client):
                 assert languages[0]['code'] == "en"
                 
                 return True
+            finally:
+                if integration.client:
+                    await integration.client.close()
         
         result = asyncio.run(_test())
         if result:

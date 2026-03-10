@@ -1,0 +1,124 @@
+{
+  "name": "Xây dựng Kênh YouTube AI thành công trong 7 ngày",
+  "children": [
+    {
+      "name": "Nghiên cứu & Chọn Nách (Niche)",
+      "children": [
+        {
+          "name": "Tìm kiếm xu hướng (Google Trends)"
+        },
+        {
+          "name": "Phân tích đối thủ thành công"
+        },
+        {
+          "name": "Xác định chủ đề game phổ biến (Grow a Garden/Roblox)"
+        },
+        {
+          "name": "Tránh sao chép hoàn toàn"
+        }
+      ]
+    },
+    {
+      "name": "Cấu trúc kể chuyện",
+      "children": [
+        {
+          "name": "Mô hình tuyến tính cơ bản (Hook - Hành động - Kết quả)"
+        },
+        {
+          "name": "Cung xung đột (Conflict Arc) tăng tương tác"
+        },
+        {
+          "name": "Vòng lặp cốt truyện (Looped Arc) đa xung đột"
+        },
+        {
+          "name": "Tạo nhân vật có thương hiệu riêng"
+        }
+      ]
+    },
+    {
+      "name": "Thiết lập kênh",
+      "children": [
+        {
+          "name": "Sử dụng tài khoản đã cũ (trên 7 ngày)"
+        },
+        {
+          "name": "Tối ưu hóa tên và handle (Broke Blocks)"
+        },
+        {
+          "name": "Tạo Avatar và Banner bằng AI (ChatGPT/DALL-E)"
+        },
+        {
+          "name": "Viết mô tả kênh bằng ChatGPT"
+        }
+      ]
+    },
+    {
+      "name": "Quy trình sản xuất bằng AI",
+      "children": [
+        {
+          "name": "Lên ý tưởng video (Ideation)"
+        },
+        {
+          "name": "Tạo câu lệnh hình ảnh (Image Prompts) chi tiết"
+        },
+        {
+          "name": "Sử dụng AI Video Generator để tạo chuyển động"
+        },
+        {
+          "name": "Biên tập: Cắt clip ngắn (1-3s), thiết kế âm thanh"
+        }
+      ]
+    },
+    {
+      "name": "Chiến lược đăng tải & Thuật toán",
+      "children": [
+        {
+          "name": "Tối ưu tiêu đề, mô tả và hashtags (#shorts)"
+        },
+        {
+          "name": "Nguyên tắc 48 giờ giữa các lần đăng"
+        },
+        {
+          "name": "Theo dõi nến view thời gian thực"
+        },
+        {
+          "name": "Để video có thời gian 'thở' trước khi đăng tiếp"
+        }
+      ]
+    },
+    {
+      "name": "Phân tích chỉ số quan trọng",
+      "children": [
+        {
+          "name": "Tỷ lệ vuốt (Swipe rate) - Mục tiêu >80%"
+        },
+        {
+          "name": "Thời gian xem trung bình (Average View Duration)"
+        },
+        {
+          "name": "Giai đoạn khám phá ban đầu của YouTube"
+        },
+        {
+          "name": "Kiên trì vượt qua giai đoạn đi ngang (Flatline)"
+        }
+      ]
+    },
+    {
+      "name": "Bài học kinh nghiệm",
+      "children": [
+        {
+          "name": "Không phụ thuộc 100% vào AI (cần sự can thiệp của người)"
+        },
+        {
+          "name": "Cải tiến từ cái đã có thay vì phát minh mới"
+        },
+        {
+          "name": "Tránh nội dung AI quá cường điệu/thiếu thực tế"
+        },
+        {
+          "name": "Tập trung vào chất lượng thực thi"
+        }
+      ]
+    }
+  ]
+}

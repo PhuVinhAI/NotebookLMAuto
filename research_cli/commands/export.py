@@ -47,24 +47,13 @@ def export_command(query: str, max_results: int, output: Optional[str],
             return
         
         # Apply filters
-        video_filter = VideoFilter()
-        if min_views:
-            videos = video_filter.filter_by_views(videos, min_views=min_views)
-        if max_views:
-            videos = video_filter.filter_by_views(videos, max_views=max_views)
-        if min_duration:
-            videos = video_filter.filter_by_duration(videos, min_duration=min_duration)
-        if max_duration:
-            videos = video_filter.filter_by_duration(videos, max_duration=max_duration)
+        if min_views or max_views:
+            videos = VideoFilter.by_view_count(videos, min_views=min_views or 0, max_views=max_views)
+        if min_duration or max_duration:
+            videos = VideoFilter.by_duration(videos, min_duration=min_duration or 0, max_duration=max_duration)
         
         # Sort videos
-        sorter = VideoSorter()
-        if sort_by == 'views':
-            videos = sorter.sort_by_views(videos, reverse=True)
-        elif sort_by == 'date':
-            videos = sorter.sort_by_date(videos, reverse=True)
-        elif sort_by == 'duration':
-            videos = sorter.sort_by_duration(videos, reverse=True)
+        videos = VideoSorter.sort_videos(videos, sort_by, reverse=True)
         
         if not videos:
             print_error("Không có video nào sau khi lọc")

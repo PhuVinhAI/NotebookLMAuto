@@ -232,14 +232,15 @@ def fulltext(ctx, notebook_id: str, source_id: str, output_json: bool):
 @notebook_group.command()
 @click.argument('notebook_id')
 @click.option('--confirm', is_flag=True, help='Xác nhận xóa')
+@click.option('--force', '-f', is_flag=True, help='Xóa ngay không cần xác nhận')
 @click.pass_context
-def delete(ctx, notebook_id: str, confirm: bool):
+def delete(ctx, notebook_id: str, confirm: bool, force: bool):
     """Xóa notebook"""
     async def _delete():
         from ..integrations import NotebookLMIntegration
         from ..utils.output import print_success, print_error
         
-        if not confirm:
+        if not confirm and not force:
             if not click.confirm(f"Bạn có chắc muốn xóa notebook {notebook_id}?"):
                 click.echo("Đã hủy")
                 return

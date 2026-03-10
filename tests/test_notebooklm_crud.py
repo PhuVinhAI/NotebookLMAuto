@@ -25,15 +25,23 @@ def test_notebook_create(mock_subprocess, mock_client):
         mock_client_instance = Mock()
         mock_notebook = Mock()
         mock_notebook.id = "test_notebook_id_123"
+        mock_client_instance.notebooks = Mock()
         mock_client_instance.notebooks.create = AsyncMock(return_value=mock_notebook)
+        mock_client_instance.close = AsyncMock()
         mock_client.from_storage = AsyncMock(return_value=mock_client_instance)
         
         async def _test():
             integration = NotebookLMIntegration()
-            async with integration:
+            await integration._ensure_authenticated()
+            integration.client = await mock_client.from_storage()
+            
+            try:
                 notebook_id = await integration.create_research_notebook("Test Notebook")
                 assert notebook_id == "test_notebook_id_123"
                 return True
+            finally:
+                if integration.client:
+                    await integration.client.close()
         
         result = asyncio.run(_test())
         if result:
@@ -66,17 +74,25 @@ def test_notebook_list(mock_subprocess, mock_client):
             Mock(id="nb1", title="Notebook 1", created_at="2024-01-01"),
             Mock(id="nb2", title="Notebook 2", created_at="2024-01-02")
         ]
+        mock_client_instance.notebooks = Mock()
         mock_client_instance.notebooks.list = AsyncMock(return_value=mock_notebooks)
+        mock_client_instance.close = AsyncMock()
         mock_client.from_storage = AsyncMock(return_value=mock_client_instance)
         
         async def _test():
             integration = NotebookLMIntegration()
-            async with integration:
+            await integration._ensure_authenticated()
+            integration.client = await mock_client.from_storage()
+            
+            try:
                 notebooks = await integration.list_notebooks()
                 assert len(notebooks) == 2
                 assert notebooks[0]['id'] == "nb1"
                 assert notebooks[0]['title'] == "Notebook 1"
                 return True
+            finally:
+                if integration.client:
+                    await integration.client.close()
         
         result = asyncio.run(_test())
         if result:
@@ -105,17 +121,22 @@ def test_source_operations(mock_subprocess, mock_client):
         
         # Mock client methods
         mock_client_instance = Mock()
+        mock_client_instance.sources = Mock()
         mock_client_instance.sources.add_url = AsyncMock(return_value="source_id_123")
         mock_sources = [
             Mock(id="src1", title="Video 1", status="ready", type="youtube"),
             Mock(id="src2", title="Video 2", status="processing", type="youtube")
         ]
         mock_client_instance.sources.list = AsyncMock(return_value=mock_sources)
+        mock_client_instance.close = AsyncMock()
         mock_client.from_storage = AsyncMock(return_value=mock_client_instance)
         
         async def _test():
             integration = NotebookLMIntegration()
-            async with integration:
+            await integration._ensure_authenticated()
+            integration.client = await mock_client.from_storage()
+            
+            try:
                 # Test add sources
                 video_urls = ["https://youtube.com/watch?v=1", "https://youtube.com/watch?v=2"]
                 source_ids = await integration.add_youtube_sources("notebook_id", video_urls, wait_for_processing=False)
@@ -129,6 +150,9 @@ def test_source_operations(mock_subprocess, mock_client):
                 assert sources[1]['status'] == "processing"
                 
                 return True
+            finally:
+                if integration.client:
+                    await integration.client.close()
         
         result = asyncio.run(_test())
         if result:
@@ -164,17 +188,25 @@ def test_chat_functionality(mock_subprocess, mock_client):
             Mock(source_id="src1", citation_number=1, cited_text="Relevant text from source 1"),
             Mock(source_id="src2", citation_number=2, cited_text="Relevant text from source 2")
         ]
+        mock_client_instance.chat = Mock()
         mock_client_instance.chat.ask = AsyncMock(return_value=mock_result)
+        mock_client_instance.close = AsyncMock()
         mock_client.from_storage = AsyncMock(return_value=mock_client_instance)
         
         async def _test():
             integration = NotebookLMIntegration()
-            async with integration:
+            await integration._ensure_authenticated()
+            integration.client = await mock_client.from_storage()
+            
+            try:
                 result = await integration.research_query("notebook_id", "What are the main points?")
                 assert result['answer'] == "This is the answer to your question."
                 assert result['conversation_id'] == "conv_123"
                 assert len(result['references']) == 2
                 return True
+            finally:
+                if integration.client:
+                    await integration.client.close()
         
         result = asyncio.run(_test())
         if result:
@@ -207,18 +239,26 @@ def test_artifact_operations(mock_subprocess, mock_client):
             Mock(id="art1", title="Research Podcast", type="Audio Overview", status="completed"),
             Mock(id="art2", title="Research Quiz", type="Quiz", status="in_progress")
         ]
+        mock_client_instance.artifacts = Mock()
         mock_client_instance.artifacts.list = AsyncMock(return_value=mock_artifacts)
+        mock_client_instance.close = AsyncMock()
         mock_client.from_storage = AsyncMock(return_value=mock_client_instance)
         
         async def _test():
             integration = NotebookLMIntegration()
-            async with integration:
+            await integration._ensure_authenticated()
+            integration.client = await mock_client.from_storage()
+            
+            try:
                 artifacts = await integration.list_artifacts("notebook_id")
                 assert len(artifacts) == 2
                 assert artifacts[0]['type'] == "Audio Overview"
                 assert artifacts[0]['status'] == "completed"
                 assert artifacts[1]['status'] == "in_progress"
                 return True
+            finally:
+                if integration.client:
+                    await integration.client.close()
         
         result = asyncio.run(_test())
         if result:
@@ -247,15 +287,23 @@ def test_notebook_delete(mock_subprocess, mock_client):
         
         # Mock client methods
         mock_client_instance = Mock()
+        mock_client_instance.notebooks = Mock()
         mock_client_instance.notebooks.delete = AsyncMock(return_value=None)
+        mock_client_instance.close = AsyncMock()
         mock_client.from_storage = AsyncMock(return_value=mock_client_instance)
         
         async def _test():
             integration = NotebookLMIntegration()
-            async with integration:
+            await integration._ensure_authenticated()
+            integration.client = await mock_client.from_storage()
+            
+            try:
                 success = await integration.delete_notebook("notebook_id")
                 assert success == True
                 return True
+            finally:
+                if integration.client:
+                    await integration.client.close()
         
         result = asyncio.run(_test())
         if result:

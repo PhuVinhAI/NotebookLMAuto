@@ -48,16 +48,16 @@ class ContentGenerators:
             if source_ids:
                 kwargs['source_ids'] = source_ids
             
-            status = await self.client.artifacts.generate_audio(notebook_id, **kwargs)
+            task = await self.client.artifacts.generate_audio(notebook_id, **kwargs)
             
             # Wait for completion
-            await self.client.artifacts.wait_for_completion(notebook_id, status.task_id)
+            await self.client.artifacts.wait_for_completion(notebook_id, task.task_id)
             
             # Download
             await self.client.artifacts.download_audio(notebook_id, output_file)
             
             logger.info(f"Podcast generated: {output_file}")
-            return {"success": True, "file": output_file, "task_id": status.task_id}
+            return {"success": True, "file": output_file, "task_id": task.task_id}
             
         except Exception as e:
             logger.error(f"Podcast generation failed: {e}")
@@ -94,18 +94,16 @@ class ContentGenerators:
             if source_ids:
                 kwargs['source_ids'] = source_ids
             
-            status = await self.client.artifacts.generate_quiz(notebook_id, **kwargs)
+            task = await self.client.artifacts.generate_quiz(notebook_id, **kwargs)
             
             # Wait for completion
-            await self.client.artifacts.wait_for_completion(notebook_id, status.task_id)
+            await self.client.artifacts.wait_for_completion(notebook_id, task.task_id)
             
             # Download with specified format
-            await self.client.artifacts.download_quiz(
-                notebook_id, output_file, output_format=output_format
-            )
+            await self.client.artifacts.download_quiz(notebook_id, output_file, format=output_format)
             
             logger.info(f"Quiz generated: {output_file}")
-            return {"success": True, "file": output_file, "task_id": status.task_id}
+            return {"success": True, "file": output_file, "task_id": task.task_id}
             
         except Exception as e:
             logger.error(f"Quiz generation failed: {e}")
@@ -128,14 +126,12 @@ class ContentGenerators:
             if source_ids:
                 kwargs['source_ids'] = source_ids
             
-            status = await self.client.artifacts.generate_flashcards(notebook_id, **kwargs)
-            await self.client.artifacts.wait_for_completion(notebook_id, status.task_id)
-            await self.client.artifacts.download_flashcards(
-                notebook_id, output_file, output_format=output_format
-            )
+            task = await self.client.artifacts.generate_flashcards(notebook_id, **kwargs)
+            await self.client.artifacts.wait_for_completion(notebook_id, task.task_id)
+            await self.client.artifacts.download_flashcards(notebook_id, output_file, format=output_format)
             
             logger.info(f"Flashcards generated: {output_file}")
-            return {"success": True, "file": output_file, "task_id": status.task_id}
+            return {"success": True, "file": output_file, "task_id": task.task_id}
             
         except Exception as e:
             logger.error(f"Flashcards generation failed: {e}")
@@ -147,8 +143,7 @@ class ContentGenerators:
         """Generate and download research mind map (instant)"""
         try:
             kwargs = {}
-            if language:
-                kwargs['language'] = language
+            # Mind map API doesn't support language parameter, skip it
             if source_ids:
                 kwargs['source_ids'] = source_ids
             
@@ -183,12 +178,12 @@ class ContentGenerators:
             if source_ids:
                 kwargs['source_ids'] = source_ids
             
-            status = await self.client.artifacts.generate_infographic(notebook_id, **kwargs)
-            await self.client.artifacts.wait_for_completion(notebook_id, status.task_id)
+            task = await self.client.artifacts.generate_infographic(notebook_id, **kwargs)
+            await self.client.artifacts.wait_for_completion(notebook_id, task.task_id)
             await self.client.artifacts.download_infographic(notebook_id, output_file)
             
             logger.info(f"Infographic generated: {output_file}")
-            return {"success": True, "file": output_file, "task_id": status.task_id}
+            return {"success": True, "file": output_file, "task_id": task.task_id}
             
         except Exception as e:
             logger.error(f"Infographic generation failed: {e}")
@@ -212,12 +207,12 @@ class ContentGenerators:
             if source_ids:
                 kwargs['source_ids'] = source_ids
             
-            status = await self.client.artifacts.generate_video(notebook_id, **kwargs)
-            await self.client.artifacts.wait_for_completion(notebook_id, status.task_id)
+            task = await self.client.artifacts.generate_video(notebook_id, **kwargs)
+            await self.client.artifacts.wait_for_completion(notebook_id, task.task_id)
             await self.client.artifacts.download_video(notebook_id, output_file)
             
             logger.info(f"Video generated: {output_file}")
-            return {"success": True, "file": output_file, "task_id": status.task_id}
+            return {"success": True, "file": output_file, "task_id": task.task_id}
             
         except Exception as e:
             logger.error(f"Video generation failed: {e}")
@@ -242,16 +237,14 @@ class ContentGenerators:
             if source_ids:
                 kwargs['source_ids'] = source_ids
             
-            status = await self.client.artifacts.generate_slide_deck(notebook_id, **kwargs)
-            await self.client.artifacts.wait_for_completion(notebook_id, status.task_id)
+            task = await self.client.artifacts.generate_slide_deck(notebook_id, **kwargs)
+            await self.client.artifacts.wait_for_completion(notebook_id, task.task_id)
             
             # Download with specified format (pdf or pptx)
-            await self.client.artifacts.download_slide_deck(
-                notebook_id, output_file, format=output_format
-            )
+            await self.client.artifacts.download_slide_deck(notebook_id, output_file, format=output_format)
             
             logger.info(f"Slide deck generated: {output_file}")
-            return {"success": True, "file": output_file, "task_id": status.task_id}
+            return {"success": True, "file": output_file, "task_id": task.task_id}
             
         except Exception as e:
             logger.error(f"Slide deck generation failed: {e}")
@@ -273,12 +266,12 @@ class ContentGenerators:
             if source_ids:
                 kwargs['source_ids'] = source_ids
             
-            status = await self.client.artifacts.generate_report(notebook_id, **kwargs)
-            await self.client.artifacts.wait_for_completion(notebook_id, status.task_id)
+            task = await self.client.artifacts.generate_report(notebook_id, **kwargs)
+            await self.client.artifacts.wait_for_completion(notebook_id, task.task_id)
             await self.client.artifacts.download_report(notebook_id, output_file)
             
             logger.info(f"Report generated: {output_file}")
-            return {"success": True, "file": output_file, "task_id": status.task_id}
+            return {"success": True, "file": output_file, "task_id": task.task_id}
             
         except Exception as e:
             logger.error(f"Report generation failed: {e}")
@@ -295,12 +288,12 @@ class ContentGenerators:
             if source_ids:
                 kwargs['source_ids'] = source_ids
             
-            status = await self.client.artifacts.generate_data_table(notebook_id, **kwargs)
-            await self.client.artifacts.wait_for_completion(notebook_id, status.task_id)
+            task = await self.client.artifacts.generate_data_table(notebook_id, **kwargs)
+            await self.client.artifacts.wait_for_completion(notebook_id, task.task_id)
             await self.client.artifacts.download_data_table(notebook_id, output_file)
             
             logger.info(f"Data table generated: {output_file}")
-            return {"success": True, "file": output_file, "task_id": status.task_id}
+            return {"success": True, "file": output_file, "task_id": task.task_id}
             
         except Exception as e:
             logger.error(f"Data table generation failed: {e}")
@@ -316,14 +309,14 @@ class ContentGenerators:
                 "slide": slide_number
             }
             
-            status = await self.client.artifacts.generate_revise_slide(notebook_id, **kwargs)
-            await self.client.artifacts.wait_for_completion(notebook_id, status.task_id)
+            task = await self.client.artifacts.revise_slide(notebook_id, **kwargs)
+            await self.client.artifacts.wait_for_completion(notebook_id, task.task_id)
             
             if output_file:
                 await self.client.artifacts.download_slide_deck(notebook_id, output_file)
             
             logger.info(f"Slide {slide_number} revised in artifact {artifact_id}")
-            return {"success": True, "task_id": status.task_id, "file": output_file}
+            return {"success": True, "task_id": task.task_id, "file": output_file}
             
         except Exception as e:
             logger.error(f"Slide revision failed: {e}")

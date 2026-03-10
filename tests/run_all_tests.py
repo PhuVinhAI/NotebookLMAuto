@@ -169,7 +169,11 @@ def main():
         'test_imports.py',
         'test_youtube_client.py', 
         'test_commands.py',
-        'test_integration.py'
+        'test_integration.py',
+        'test_notebooklm_auth.py',
+        'test_notebooklm_crud.py',
+        'test_content_generation.py',
+        'test_pipeline_workflows.py'
     ]
     
     for test_file in test_files:

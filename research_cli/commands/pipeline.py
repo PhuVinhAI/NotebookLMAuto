@@ -96,8 +96,7 @@ def pipeline(ctx, query: str, notebook_title: Optional[str], max_videos: int,
             
             # Step 2: Create NotebookLM notebook
             print_info("📓 Tạo notebook NotebookLM...")
-            if not notebook_title:
-                notebook_title = f"Research: {query}"
+            final_notebook_title = notebook_title or f"Research: {query}"
             
             async with NotebookLMIntegration() as nlm:
                 # Set language if specified
@@ -105,9 +104,9 @@ def pipeline(ctx, query: str, notebook_title: Optional[str], max_videos: int,
                     await nlm.set_language(language)
                     print_info(f"🌐 Đặt ngôn ngữ: {language}")
                 
-                notebook_id = await nlm.create_research_notebook(notebook_title)
+                notebook_id = await nlm.create_research_notebook(final_notebook_title)
                 results["notebook_id"] = notebook_id
-                print_success(f"Đã tạo notebook: {notebook_title}")
+                print_success(f"Đã tạo notebook: {final_notebook_title}")
                 
                 # Step 3: Add YouTube sources
                 print_info("📹 Thêm video làm nguồn...")
