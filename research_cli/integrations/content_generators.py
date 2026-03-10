@@ -167,3 +167,66 @@ class ContentGenerators:
         except Exception as e:
             logger.error(f"Video generation failed: {e}")
             return False
+    
+    async def generate_slide_deck(self, notebook_id: str, instructions: str = None,
+                                 output_file: str = "research_slides.pdf") -> bool:
+        """Generate and download slide deck
+        
+        Args:
+            notebook_id: Notebook ID
+            instructions: Custom instructions
+            output_file: Output filename
+            
+        Returns:
+            True if successful
+        """
+        try:
+            # Generate slide deck
+            instructions = instructions or "Create a comprehensive slide deck"
+            status = await self.client.artifacts.generate_slide_deck(
+                notebook_id, instructions=instructions
+            )
+            
+            # Wait for completion
+            await self.client.artifacts.wait_for_completion(notebook_id, status.task_id)
+            
+            # Download as PDF
+            await self.client.artifacts.download_slide_deck(notebook_id, output_file)
+            
+            logger.info(f"Slide deck generated: {output_file}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Slide deck generation failed: {e}")
+            return False
+    
+    async def generate_report(self, notebook_id: str, format_type: str = "briefing-doc",
+                             output_file: str = "research_report.md") -> bool:
+        """Generate and download research report
+        
+        Args:
+            notebook_id: Notebook ID
+            format_type: Report format (briefing-doc, study-guide, blog-post)
+            output_file: Output filename
+            
+        Returns:
+            True if successful
+        """
+        try:
+            # Generate report
+            status = await self.client.artifacts.generate_report(
+                notebook_id, format=format_type
+            )
+            
+            # Wait for completion
+            await self.client.artifacts.wait_for_completion(notebook_id, status.task_id)
+            
+            # Download
+            await self.client.artifacts.download_report(notebook_id, output_file)
+            
+            logger.info(f"Report generated: {output_file}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Report generation failed: {e}")
+            return False

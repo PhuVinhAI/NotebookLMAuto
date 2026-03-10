@@ -103,3 +103,31 @@ class NotebookLMIntegration:
         except Exception as e:
             logger.error(f"Research query failed: {e}")
             raise
+    
+    async def list_notebooks(self) -> List[Dict]:
+        """List all notebooks"""
+        try:
+            notebooks = await self.client.notebooks.list()
+            return [{"id": nb.id, "title": nb.title} for nb in notebooks]
+        except Exception as e:
+            logger.error(f"Failed to list notebooks: {e}")
+            raise
+    
+    async def list_sources(self, notebook_id: str) -> List[Dict]:
+        """List sources in notebook"""
+        try:
+            sources = await self.client.sources.list(notebook_id)
+            return [{"id": src.id, "title": src.title, "status": src.status} for src in sources]
+        except Exception as e:
+            logger.error(f"Failed to list sources: {e}")
+            raise
+    
+    async def delete_notebook(self, notebook_id: str) -> bool:
+        """Delete a notebook"""
+        try:
+            await self.client.notebooks.delete(notebook_id)
+            logger.info(f"Deleted notebook: {notebook_id}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to delete notebook: {e}")
+            return False

@@ -94,3 +94,95 @@ def ask(ctx, notebook_id: str, question: str, output_json: bool):
             print_error(f"Không thể trả lời câu hỏi: {e}")
     
     asyncio.run(_ask())
+
+
+@notebook_group.command()
+@click.option('--json', 'output_json', is_flag=True, help='Xuất kết quả dạng JSON')
+@click.pass_context
+def list(ctx, output_json: bool):
+    """Liệt kê tất cả notebook"""
+    async def _list():
+        from ..integrations import NotebookLMIntegration
+        from ..utils.output import print_error
+        
+        try:
+            async with NotebookLMIntegration() as nlm:
+                notebooks = await nlm.list_notebooks()
+                
+                if output_json:
+                    import json
+                    click.echo(json.dumps(notebooks, indent=2, ensure_ascii=False))
+                else:
+                    if not notebooks:
+                        click.echo("📓 Không có notebook nào")
+                    else:
+                        click.echo(f"📓 Có {len(notebooks)} notebook:")
+                        for nb in notebooks:
+                            click.echo(f"  • {nb['title']} (ID: {nb['id'][:8]}...)")
+                    
+        except Exception as e:
+            print_error(f"Không thể liệt kê notebook: {e}")
+    
+    asyncio.run(_list())
+
+
+@notebook_group.command()
+@click.argument('notebook_id')
+@click.option('--json', 'output_json', is_flag=True, help='Xuất kết quả dạng JSON')
+@click.pass_context
+def sources(ctx, notebook_id: str, output_json: bool):
+    """Liệt kê nguồn trong notebook"""
+    async def _sources():
+        from ..integrations import NotebookLMIntegration
+        from ..utils.output import print_error
+        
+        try:
+            async with NotebookLMIntegration() as nlm:
+                sources = await nlm.list_sources(notebook_id)
+                
+                if output_json:
+                    import json
+                    click.echo(json.dumps(sources, indent=2, ensure_ascii=False))
+                else:
+                    if not sources:
+                        click.echo("📄 Không có nguồn nào")
+                    else:
+                        click.echo(f"📄 Có {len(sources)} nguồn:")
+                        for src in sources:
+                            status_icon = "✅" if src['status'] == 'ready' else "⏳"
+                            click.echo(f"  {status_icon} {src['title']} (ID: {src['id'][:8]}...)")
+                    
+        except Exception as e:
+            print_error(f"Không thể liệt kê nguồn: {e}")
+    
+    asyncio.run(_sources())
+
+
+@notebook_group.command()
+@click.argument('notebook_id')
+@click.option('--confirm', is_flag=True, help='Xác nhận xóa')
+@click.pass_context
+def delete(ctx, notebook_id: str, confirm: bool):
+    """Xóa notebook"""
+    async def _delete():
+        from ..integrations import NotebookLMIntegration
+        from ..utils.output import print_success, print_error
+        
+        if not confirm:
+            if not click.confirm(f"Bạn có chắc muốn xóa notebook {notebook_id}?"):
+                click.echo("Đã hủy")
+                return
+        
+        try:
+            async with NotebookLMIntegration() as nlm:
+                success = await nlm.delete_notebook(notebook_id)
+                
+                if success:
+                    print_success(f"Đã xóa notebook: {notebook_id}")
+                else:
+                    print_error("Không thể xóa notebook")
+                    
+        except Exception as e:
+            print_error(f"Lỗi xóa notebook: {e}")
+    
+    asyncio.run(_delete())

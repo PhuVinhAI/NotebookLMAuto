@@ -9,7 +9,8 @@ from .commands.search import search_command
 from .commands.info import info_command
 from .commands.notebook import notebook_group
 from .commands.generate import generate_group
-from .commands.workflow import workflow_group
+from .commands.export import export_command
+from .commands.pipeline import pipeline
 from .__init__ import __version__
 
 
@@ -46,7 +47,8 @@ cli.add_command(search_command, name='search')
 cli.add_command(info_command, name='info')
 cli.add_command(notebook_group, name='notebook')
 cli.add_command(generate_group, name='generate')
-cli.add_command(workflow_group, name='workflow')
+cli.add_command(export_command, name='export')
+cli.add_command(pipeline, name='pipeline')
 
 
 if __name__ == '__main__':
