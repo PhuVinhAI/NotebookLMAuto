@@ -50,8 +50,8 @@ class ContentGenerators:
             
             task = await self.client.artifacts.generate_audio(notebook_id, **kwargs)
             
-            # Wait for completion
-            await self.client.artifacts.wait_for_completion(notebook_id, task.task_id)
+            # Wait for completion (podcast takes 10-20 minutes)
+            await self.client.artifacts.wait_for_completion(notebook_id, task.task_id, timeout=1200)
             
             # Download
             await self.client.artifacts.download_audio(notebook_id, output_file)
