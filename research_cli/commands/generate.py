@@ -333,14 +333,17 @@ def report(ctx, notebook_id: str, format: str, append: Optional[str], language: 
 
 @generate_group.command()
 @click.argument('notebook_id')
-@click.argument('description', help='Mô tả bảng dữ liệu cần tạo')
+@click.argument('description')  # Remove help parameter from argument
 @click.option('--language', help='Ngôn ngữ đầu ra')
 @click.option('--sources', '-s', multiple=True, help='Source IDs cụ thể')
 @click.option('--output', '-o', default='data.csv', help='Tên file đầu ra')
 @click.pass_context
 def data_table(ctx, notebook_id: str, description: str, language: Optional[str],
               sources: tuple, output: str):
-    """Tạo bảng dữ liệu từ notebook"""
+    """Tạo bảng dữ liệu từ notebook
+    
+    DESCRIPTION: Mô tả bảng dữ liệu cần tạo
+    """
     async def _generate():
         from ..integrations import NotebookLMIntegration, ContentGenerators
         from ..utils.output import print_success, print_error, print_info
@@ -369,14 +372,19 @@ def data_table(ctx, notebook_id: str, description: str, language: Optional[str],
 
 @generate_group.command()
 @click.argument('notebook_id')
-@click.argument('artifact_id', help='ID của slide deck cần chỉnh sửa')
-@click.argument('slide_number', type=int, help='Số thứ tự slide (bắt đầu từ 0)')
-@click.argument('prompt', help='Hướng dẫn chỉnh sửa slide')
+@click.argument('artifact_id')  # Remove help parameter
+@click.argument('slide_number', type=int)  # Remove help parameter
+@click.argument('prompt')  # Remove help parameter
 @click.option('--output', '-o', help='Tên file đầu ra (tùy chọn)')
 @click.pass_context
 def revise_slide(ctx, notebook_id: str, artifact_id: str, slide_number: int, 
                 prompt: str, output: Optional[str]):
-    """Chỉnh sửa slide cụ thể trong slide deck"""
+    """Chỉnh sửa slide cụ thể trong slide deck
+    
+    ARTIFACT_ID: ID của slide deck cần chỉnh sửa
+    SLIDE_NUMBER: Số thứ tự slide (bắt đầu từ 0)
+    PROMPT: Hướng dẫn chỉnh sửa slide
+    """
     async def _generate():
         from ..integrations import NotebookLMIntegration, ContentGenerators
         from ..utils.output import print_success, print_error, print_info
