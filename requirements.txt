@@ -1,3 +1,11 @@
+# YouTube CLI Tool Dependencies
 yt-dlp>=2024.12.13
-requests>=2.31.0
 click>=8.0.0
+requests>=2.31.0
+
+# NotebookLM Integration
+notebooklm-py>=0.3.3
+playwright>=1.40.0
+
+# Optional: Browser support for NotebookLM login
+# Install with: pip install "notebooklm-py[browser]"
