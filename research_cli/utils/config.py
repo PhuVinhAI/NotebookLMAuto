@@ -1,98 +1,38 @@
 """
-Configuration management utilities
+Configuration management for research CLI
 """
 
 import json
 import os
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
-
-def get_config_dir() -> Path:
-    """Get configuration directory"""
+def get_config_path() -> Path:
+    """Get the configuration file path"""
     home = Path.home()
     config_dir = home / '.research_cli'
     config_dir.mkdir(exist_ok=True)
-    return config_dir
-
-
-def get_config_file() -> Path:
-    """Get configuration file path"""
-    return get_config_dir() / 'config.json'
-
+    return config_dir / 'config.json'
 
 def load_config() -> Dict[str, Any]:
     """Load configuration from file"""
-    config_file = get_config_file()
+    config_path = get_config_path()
     
-    if not config_file.exists():
-        return get_default_config()
+    if not config_path.exists():
+        return {}
     
     try:
-        with open(config_file, 'r', encoding='utf-8') as f:
-            config = json.load(f)
-        return config
+        with open(config_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
     except (json.JSONDecodeError, IOError):
-        return get_default_config()
+        return {}
 
-
-def save_config(config: Dict[str, Any]) -> bool:
+def save_config(config: Dict[str, Any]) -> None:
     """Save configuration to file"""
+    config_path = get_config_path()
+    
     try:
-        config_file = get_config_file()
-        with open(config_file, 'w', encoding='utf-8') as f:
+        with open(config_path, 'w', encoding='utf-8') as f:
             json.dump(config, f, indent=2, ensure_ascii=False)
-        return True
-    except IOError:
-        return False
-
-
-def get_default_config() -> Dict[str, Any]:
-    """Get default configuration"""
-    return {
-        'youtube': {
-            'default_max_results': 10,
-            'default_min_views': 1000,
-            'default_sort_by': 'relevance'
-        },
-        'notebooklm': {
-            'default_language': 'en',
-            'auto_wait_for_processing': True,
-            'default_output_dir': '.'
-        },
-        'output': {
-            'default_format': 'human',
-            'show_progress': True,
-            'verbose': False
-        }
-    }
-
-
-def get_setting(key: str, default: Any = None) -> Any:
-    """Get a specific setting"""
-    config = load_config()
-    keys = key.split('.')
-    
-    current = config
-    for k in keys:
-        if isinstance(current, dict) and k in current:
-            current = current[k]
-        else:
-            return default
-    
-    return current
-
-
-def set_setting(key: str, value: Any) -> bool:
-    """Set a specific setting"""
-    config = load_config()
-    keys = key.split('.')
-    
-    current = config
-    for k in keys[:-1]:
-        if k not in current:
-            current[k] = {}
-        current = current[k]
-    
-    current[keys[-1]] = value
-    return save_config(config)
+    except IOError as e:
+        print(f"Warning: Could not save config: {e}")

@@ -16,7 +16,7 @@ def read_requirements():
         return [line.strip() for line in f if line.strip() and not line.startswith('#')]
 
 setup(
-    name='youtube-cli-pro',
+    name='research-cli-pro',
     version='2.0.0',
     description='Professional YouTube search and analysis CLI tool',
     long_description=read_readme(),
@@ -29,8 +29,8 @@ setup(
     install_requires=read_requirements(),
     entry_points={
         'console_scripts': [
-            'youtube-cli=youtube_cli.main:cli',
-            'ytcli=youtube_cli.main:cli',
+            'research-cli=research_cli.main:cli',
+            'ytcli=research_cli.main:cli',
         ],
     },
     classifiers=[

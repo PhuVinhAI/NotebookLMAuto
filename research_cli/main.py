@@ -4,15 +4,18 @@ Main CLI entry point for Research CLI Tool
 
 import click
 import logging
+import sys
+import os
 
-from .commands.search import search_command
-from .commands.info import info_command
-from .commands.notebook import notebook_group
-from .commands.generate import generate_group
-from .commands.export import export_command
-from .commands.pipeline import pipeline
-from .commands.auth import login, logout, status
-from .__init__ import __version__
+# Add the package directory to Python path
+package_dir = os.path.dirname(os.path.abspath(__file__))
+if package_dir not in sys.path:
+    sys.path.insert(0, os.path.dirname(package_dir))
+
+from research_cli.commands.search import search_command
+from research_cli.commands.info import info_command
+from research_cli.commands.export import export_command
+from research_cli import __version__
 
 
 def setup_logging(verbose: bool = False):
@@ -29,20 +32,14 @@ def setup_logging(verbose: bool = False):
 @click.option('--verbose', '-v', is_flag=True, help='Bật chế độ verbose')
 @click.pass_context
 def cli(ctx, verbose: bool):
-    """Research CLI Tool - YouTube Search & NotebookLM Integration
+    """Research CLI Tool - YouTube Search
     
-    Công cụ nghiên cứu chuyên nghiệp kết hợp YouTube và NotebookLM
+    Công cụ tìm kiếm YouTube chuyên nghiệp với bộ lọc nâng cao
     
-    🚀 Bắt đầu nhanh:
-      research-cli login                    # Đăng nhập Google/NotebookLM
-      research-cli status                   # Kiểm tra trạng thái đăng nhập
-      research-cli pipeline "AI tools"      # Chạy pipeline nghiên cứu tự động
-    
-    📚 Các lệnh chính:
-      research-cli search "AI tools" --min-views 100000
-      research-cli notebook create "My Research"
-      research-cli notebook share <id> --public
-      research-cli generate podcast <notebook-id>
+    Examples:
+      research-cli search "AI tools" --min-views 100000 --year 2026
+      research-cli info "https://youtube.com/watch?v=..."
+      research-cli export "AI trends" -n 5 -o urls.txt
     """
     ctx.ensure_object(dict)
     ctx.obj['verbose'] = verbose
@@ -50,15 +47,9 @@ def cli(ctx, verbose: bool):
 
 
 # Register all command groups
-cli.add_command(login, name='login')
-cli.add_command(logout, name='logout') 
-cli.add_command(status, name='status')
 cli.add_command(search_command, name='search')
 cli.add_command(info_command, name='info')
-cli.add_command(notebook_group, name='notebook')
-cli.add_command(generate_group, name='generate')
 cli.add_command(export_command, name='export')
-cli.add_command(pipeline, name='pipeline')
 
 
 if __name__ == '__main__':
